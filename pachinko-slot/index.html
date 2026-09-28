@@ -32,6 +32,13 @@
   <!-- INTRO -->
   <section id="screen-intro" class="screen active">
     <div class="card">
+      <div class="character-intro">
+        <div class="character-avatar">🎰</div>
+        <div class="character-bubble">
+          <p class="character-name">占い師 ロトさん</p>
+          <p class="character-line">若い頃から全国のホールに入り浸り、気づけば「勘」だけで飯を食えるようになった自称・的中率No.1の占い師じゃ。今日のお前さんにピッタリの一台、ワシが占ってやるぞ。</p>
+        </div>
+      </div>
       <h1>今日のあなたにピッタリの一台を占います</h1>
       <p class="lead">パチンコ・スロット、気分、血液型、星座など25の質問から、今日全国のホールで狙うべき実在の機種を診断します。<br>友達と行く前の話のタネにもどうぞ。</p>
       <button class="btn-primary" id="btn-start">占いを始める（無料・登録不要）</button>
@@ -56,9 +63,12 @@
       <h2 id="result-genre">機種名</h2>
       <p id="result-desc" class="result-desc">説明文</p>
 
-      <div class="result-block">
-        <h3>🍀 今日の立ち回りアドバイス</h3>
-        <p id="result-advice"></p>
+      <div class="character-intro character-intro-result">
+        <div class="character-avatar">🎰</div>
+        <div class="character-bubble">
+          <p class="character-name">ロトさんより</p>
+          <p class="character-line" id="result-advice"></p>
+        </div>
       </div>
 
       <div class="result-block">
