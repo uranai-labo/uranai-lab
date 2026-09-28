@@ -2,20 +2,40 @@
    サイト設定
    別サイト（枕詞違い）を派生させる場合は、ここと index.html の
    タイトル/見出し文言、style.css の --accent 系カラーを差し替える。
-   診断ロジック（QUESTIONS / MACHINES 以下）はそのまま使い回せる想定。
+   診断ロジック（QUESTION_POOL / MACHINES 以下）はそのまま使い回せる想定。
    ============================================================ */
 const SITE_NAME = "パチンコ・スロット占い";
 
-/* ---------------- 質問定義（全25問・占いチックな設問） ---------------- */
-const QUESTIONS = [
-  {
-    key: "category",
-    title: "今日占うのはどっち？",
-    options: [
-      { label: "パチンコ", value: "pachinko" },
-      { label: "スロット", value: "slot" },
-    ],
-  },
+/* ---------------- 質問定義 ----------------
+   「category」は最初に必ず聞く（パチンコ/スロットの判定に使うため）。
+   「genrepref」は最後に必ず聞く（結果のスペック区分決定に使うため）。
+   その間は QUESTION_POOL からランダムに選出・ランダムな順番で出題することで、
+   毎回同じ質問にならないようにしている（buildQuizRoute参照）。
+   ------------------------------------------------------------ */
+const FIXED_START_QUESTION = {
+  key: "category",
+  title: "今日占うのはどっち？",
+  options: [
+    { label: "パチンコ", value: "pachinko" },
+    { label: "スロット", value: "slot" },
+  ],
+};
+
+const FIXED_END_QUESTION = {
+  key: "genrepref",
+  title: "今日なんとなく惹かれるのは？",
+  options: [
+    { label: "版権・アニメ系", value: "license" },
+    { label: "オリジナル系", value: "original" },
+    { label: "昔からある定番機", value: "classic" },
+    { label: "新台・話題機", value: "new" },
+  ],
+};
+
+// 出題ルートに毎回含める質問の数（この数だけ QUESTION_POOL からランダムに抽出する）
+const ROUTE_POOL_COUNT = 18;
+
+const QUESTION_POOL = [
   {
     key: "who",
     title: "今日は誰と行く？",
@@ -236,22 +256,501 @@ const QUESTIONS = [
     ],
   },
   {
-    key: "genrepref",
-    title: "今日なんとなく惹かれるのは？",
-    options: [
-      { label: "版権・アニメ系", value: "license" },
-      { label: "オリジナル系", value: "original" },
-      { label: "昔からある定番機", value: "classic" },
-      { label: "新台・話題機", value: "new" },
-    ],
-  },
-  {
     key: "birthMonth",
     title: "あなたの生まれ月は？（運勢の算出に使います）",
     options: Array.from({ length: 12 }, (_, i) => ({
       label: `${i + 1}月`,
       value: String(i + 1),
     })),
+  },
+
+  /* ---- ここから追加の余剰質問（毎回ランダムに一部だけ出題される） ---- */
+  {
+    key: "eto",
+    title: "あなたの干支は？",
+    options: [
+      "子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥",
+    ].map((label) => ({ label, value: label })),
+  },
+  {
+    key: "taste",
+    title: "直感で好きな味は？",
+    options: [
+      { label: "甘い", value: "sweet" },
+      { label: "辛い", value: "spicy" },
+      { label: "しょっぱい", value: "salty" },
+      { label: "酸っぱい", value: "sour" },
+    ],
+  },
+  {
+    key: "drink",
+    title: "好きな飲み物は？",
+    options: [
+      { label: "コーヒー", value: "coffee" },
+      { label: "お茶", value: "tea" },
+      { label: "ジュース", value: "juice" },
+      { label: "水・炭酸水", value: "water" },
+    ],
+  },
+  {
+    key: "palmline",
+    title: "手相で気になる線は？",
+    options: [
+      { label: "生命線", value: "life" },
+      { label: "感情線", value: "emotion" },
+      { label: "知能線", value: "brain" },
+      { label: "運命線", value: "fate" },
+    ],
+  },
+  {
+    key: "omikuji",
+    title: "おみくじで出てほしいのは？",
+    options: [
+      { label: "大吉", value: "daikichi" },
+      { label: "中吉", value: "chukichi" },
+      { label: "吉", value: "kichi" },
+      { label: "末吉", value: "suekichi" },
+    ],
+  },
+  {
+    key: "animal",
+    title: "直感で好きな動物は？",
+    options: [
+      { label: "犬", value: "dog" },
+      { label: "猫", value: "cat" },
+      { label: "鳥", value: "bird" },
+      { label: "うさぎ", value: "rabbit" },
+    ],
+  },
+  {
+    key: "celestial",
+    title: "好きな天体は？",
+    options: [
+      { label: "太陽", value: "sun" },
+      { label: "月", value: "moon" },
+      { label: "星", value: "star" },
+      { label: "惑星", value: "planet" },
+    ],
+  },
+  {
+    key: "stoneColor",
+    title: "パワーストーンで惹かれる色は？",
+    options: [
+      { label: "透明・白", value: "clear" },
+      { label: "黒", value: "black" },
+      { label: "緑", value: "green" },
+      { label: "青", value: "blue" },
+    ],
+  },
+  {
+    key: "sound",
+    title: "今日惹かれる音は？",
+    options: [
+      { label: "静寂", value: "silence" },
+      { label: "雨音", value: "rain" },
+      { label: "音楽", value: "music" },
+      { label: "賑わい", value: "bustle" },
+    ],
+  },
+  {
+    key: "dominantHand",
+    title: "利き手は？",
+    options: [
+      { label: "右利き", value: "right" },
+      { label: "左利き", value: "left" },
+      { label: "両利き", value: "both" },
+    ],
+  },
+  {
+    key: "shoeOrder",
+    title: "靴を履くのはどっちの足から？",
+    options: [
+      { label: "右から", value: "right" },
+      { label: "左から", value: "left" },
+      { label: "気にしたことない", value: "none" },
+    ],
+  },
+  {
+    key: "walletColor",
+    title: "財布の色は？",
+    options: [
+      { label: "金色・黄色系", value: "gold" },
+      { label: "黒", value: "black" },
+      { label: "赤", value: "red" },
+      { label: "茶色", value: "brown" },
+    ],
+  },
+  {
+    key: "scent",
+    title: "好きな香りは？",
+    options: [
+      { label: "柑橘系", value: "citrus" },
+      { label: "フローラル系", value: "floral" },
+      { label: "ウッド系", value: "wood" },
+      { label: "無香", value: "none" },
+    ],
+  },
+  {
+    key: "tempFeel",
+    title: "今日の気温の感じ方は？",
+    options: [
+      { label: "暑い", value: "hot" },
+      { label: "ちょうどいい", value: "nice" },
+      { label: "肌寒い", value: "cool" },
+      { label: "寒い", value: "cold" },
+    ],
+  },
+  {
+    key: "timeSpend",
+    title: "好きな時間の過ごし方は？",
+    options: [
+      { label: "一人の時間", value: "alone" },
+      { label: "誰かと過ごす", value: "together" },
+      { label: "自然の中", value: "nature" },
+      { label: "賑やかな場所", value: "crowd" },
+    ],
+  },
+  {
+    key: "recentIncrease",
+    title: "最近増えた気がするものは？",
+    options: [
+      { label: "物", value: "things" },
+      { label: "お金", value: "money" },
+      { label: "悩み", value: "worries" },
+      { label: "やる気", value: "motivation" },
+    ],
+  },
+  {
+    key: "intuitionSide",
+    title: "直感でどちらが良い気がする？",
+    options: [
+      { label: "右", value: "right" },
+      { label: "左", value: "left" },
+    ],
+  },
+  {
+    key: "vehicle",
+    title: "好きな乗り物は？",
+    options: [
+      { label: "車", value: "car" },
+      { label: "電車", value: "train" },
+      { label: "バイク", value: "bike" },
+      { label: "自転車", value: "bicycle" },
+    ],
+  },
+  {
+    key: "sportsWatch",
+    title: "好きなスポーツ観戦は？",
+    options: [
+      { label: "野球", value: "baseball" },
+      { label: "サッカー", value: "soccer" },
+      { label: "相撲", value: "sumo" },
+      { label: "格闘技", value: "fighting" },
+    ],
+  },
+  {
+    key: "cafeSeat",
+    title: "カフェで座るなら？",
+    options: [
+      { label: "窓際", value: "window" },
+      { label: "奥の席", value: "back" },
+      { label: "カウンター", value: "counter" },
+      { label: "テラス", value: "terrace" },
+    ],
+  },
+  {
+    key: "clockStyle",
+    title: "好きな時計の形は？",
+    options: [
+      { label: "アナログ", value: "analog" },
+      { label: "デジタル", value: "digital" },
+      { label: "砂時計", value: "hourglass" },
+      { label: "日時計", value: "sundial" },
+    ],
+  },
+  {
+    key: "shape",
+    title: "直感で好きな図形は？",
+    options: [
+      { label: "丸", value: "circle" },
+      { label: "三角", value: "triangle" },
+      { label: "四角", value: "square" },
+      { label: "星形", value: "star" },
+    ],
+  },
+  {
+    key: "jankenFirst",
+    title: "じゃんけんで最初に出しがちなのは？",
+    options: [
+      { label: "グー", value: "rock" },
+      { label: "チョキ", value: "scissors" },
+      { label: "パー", value: "paper" },
+    ],
+  },
+  {
+    key: "zodiacElement",
+    title: "星座の性質で近いのは？",
+    options: [
+      { label: "火（牡羊・獅子・射手）", value: "fire" },
+      { label: "地（牡牛・乙女・山羊）", value: "earth" },
+      { label: "風（双子・天秤・水瓶）", value: "air" },
+      { label: "水（蟹・蠍・魚）", value: "water" },
+    ],
+  },
+  {
+    key: "diceWish",
+    title: "サイコロを振って出てほしい目は？",
+    options: [
+      { label: "1", value: "1" },
+      { label: "3", value: "3" },
+      { label: "5", value: "5" },
+      { label: "6", value: "6" },
+    ],
+  },
+  {
+    key: "charmType",
+    title: "お守りを選ぶなら？",
+    options: [
+      { label: "金運", value: "money" },
+      { label: "勝負運", value: "victory" },
+      { label: "縁結び", value: "love" },
+      { label: "健康", value: "health" },
+    ],
+  },
+  {
+    key: "flower",
+    title: "直感で好きな花は？",
+    options: [
+      { label: "桜", value: "sakura" },
+      { label: "向日葵", value: "sunflower" },
+      { label: "バラ", value: "rose" },
+      { label: "椿", value: "camellia" },
+    ],
+  },
+  {
+    key: "kanjiPhrase",
+    title: "響きが好きな四字熟語は？",
+    options: [
+      { label: "一攫千金", value: "ikkaku" },
+      { label: "七転八起", value: "shichiten" },
+      { label: "大願成就", value: "taigan" },
+      { label: "運気上昇", value: "unki" },
+    ],
+  },
+  {
+    key: "clothColor",
+    title: "今日の服は何系の色？",
+    options: [
+      { label: "明るい色", value: "bright" },
+      { label: "暗い色", value: "dark" },
+      { label: "派手な色", value: "flashy" },
+      { label: "地味な色", value: "plain" },
+    ],
+  },
+  {
+    key: "cardGame",
+    title: "好きなカードゲームは？",
+    options: [
+      { label: "トランプ", value: "cards" },
+      { label: "花札", value: "hanafuda" },
+      { label: "UNO", value: "uno" },
+      { label: "ポーカー", value: "poker" },
+    ],
+  },
+  {
+    key: "jinxHabit",
+    title: "縁起の担ぎ方といえば？",
+    options: [
+      { label: "ゲン担ぎご飯を食べる", value: "food" },
+      { label: "お守りを持つ", value: "charm" },
+      { label: "願掛けをする", value: "vow" },
+      { label: "特にしない", value: "none" },
+    ],
+  },
+  {
+    key: "oddEven",
+    title: "奇数派？偶数派？",
+    options: [
+      { label: "奇数派", value: "odd" },
+      { label: "偶数派", value: "even" },
+    ],
+  },
+  {
+    key: "meetupTiming",
+    title: "待ち合わせのタイプは？",
+    options: [
+      { label: "早めに着く", value: "early" },
+      { label: "ぴったりに着く", value: "ontime" },
+      { label: "少し遅れがち", value: "late" },
+    ],
+  },
+  {
+    key: "musicGenre",
+    title: "好きな音楽の雰囲気は？",
+    options: [
+      { label: "アップテンポ", value: "upbeat" },
+      { label: "バラード", value: "ballad" },
+      { label: "レトロ", value: "retro" },
+      { label: "静か系", value: "calm" },
+    ],
+  },
+  {
+    key: "cravingToday",
+    title: "今日一番食べたいものは？",
+    options: [
+      { label: "甘いもの", value: "sweet" },
+      { label: "しょっぱいもの", value: "salty" },
+      { label: "麺類", value: "noodles" },
+      { label: "ご飯もの", value: "rice" },
+    ],
+  },
+  {
+    key: "starView",
+    title: "好きな星の見え方は？",
+    options: [
+      { label: "満天の星", value: "starry_sky" },
+      { label: "一番星", value: "first_star" },
+      { label: "流れ星", value: "shooting_star" },
+      { label: "月と一緒", value: "with_moon" },
+    ],
+  },
+  {
+    key: "walletItem",
+    title: "財布に入れておきたいものは？",
+    options: [
+      { label: "五円玉", value: "coin" },
+      { label: "お札は上向きに", value: "bills_up" },
+      { label: "レシートは持たない", value: "no_receipt" },
+      { label: "特にこだわりなし", value: "none" },
+    ],
+  },
+  {
+    key: "skyColor",
+    title: "好きな時間帯の空の色は？",
+    options: [
+      { label: "朝焼け", value: "dawn" },
+      { label: "青空", value: "blue_sky" },
+      { label: "夕焼け", value: "sunset" },
+      { label: "星空", value: "starry" },
+    ],
+  },
+  {
+    key: "doorColor",
+    title: "直感で選ぶ扉の色は？",
+    options: [
+      { label: "赤い扉", value: "red" },
+      { label: "青い扉", value: "blue" },
+      { label: "金の扉", value: "gold" },
+      { label: "木の扉", value: "wood" },
+    ],
+  },
+  {
+    key: "luckyItemType",
+    title: "ラッキーアイテムにするなら？",
+    options: [
+      { label: "リング", value: "ring" },
+      { label: "ネックレス", value: "necklace" },
+      { label: "キーホルダー", value: "keyholder" },
+      { label: "腕時計", value: "watch" },
+    ],
+  },
+  {
+    key: "folktale",
+    title: "好きな昔話は？",
+    options: [
+      { label: "桃太郎", value: "momotaro" },
+      { label: "浦島太郎", value: "urashima" },
+      { label: "かぐや姫", value: "kaguyahime" },
+      { label: "一寸法師", value: "issunboshi" },
+    ],
+  },
+  {
+    key: "todayVibe",
+    title: "今日のテンションを一言で言うと？",
+    options: [
+      { label: "ワクワク", value: "excited" },
+      { label: "落ち着き", value: "calm" },
+      { label: "そわそわ", value: "restless" },
+      { label: "どっしり", value: "steady" },
+    ],
+  },
+  {
+    key: "uranaiGenre",
+    title: "好きな占いジャンルは？",
+    options: [
+      { label: "星座占い", value: "zodiac" },
+      { label: "血液型占い", value: "blood" },
+      { label: "タロット", value: "tarot" },
+      { label: "手相", value: "palm" },
+    ],
+  },
+  {
+    key: "walletConcern",
+    title: "財布の中で気になるのは？",
+    options: [
+      { label: "小銭の量", value: "coins" },
+      { label: "カードの枚数", value: "cards" },
+      { label: "レシートの量", value: "receipts" },
+      { label: "特に気にしない", value: "none" },
+    ],
+  },
+  {
+    key: "wagara",
+    title: "好きな和柄は？",
+    options: [
+      { label: "麻の葉", value: "asanoha" },
+      { label: "市松模様", value: "ichimatsu" },
+      { label: "七宝", value: "shippo" },
+      { label: "青海波", value: "seigaiha" },
+    ],
+  },
+  {
+    key: "fruit",
+    title: "直感で選ぶ果物は？",
+    options: [
+      { label: "りんご", value: "apple" },
+      { label: "みかん", value: "orange" },
+      { label: "ぶどう", value: "grape" },
+      { label: "桃", value: "peach" },
+    ],
+  },
+  {
+    key: "rainMood",
+    title: "天気雨に出会ったときの気分は？",
+    options: [
+      { label: "ラッキーと思う", value: "lucky" },
+      { label: "不思議に思う", value: "curious" },
+      { label: "特に気にしない", value: "none" },
+      { label: "写真を撮りたくなる", value: "photo" },
+    ],
+  },
+  {
+    key: "recentColor",
+    title: "最近よく目にする色は？",
+    options: [
+      { label: "赤系", value: "red" },
+      { label: "青系", value: "blue" },
+      { label: "緑系", value: "green" },
+      { label: "黄色系", value: "yellow" },
+    ],
+  },
+  {
+    key: "mythicalCreature",
+    title: "好きな伝説上の生き物は？",
+    options: [
+      { label: "龍", value: "dragon" },
+      { label: "鳳凰", value: "phoenix" },
+      { label: "麒麟", value: "kirin" },
+      { label: "白虎", value: "byakko" },
+    ],
+  },
+  {
+    key: "indoorOutdoor",
+    title: "インドア派？アウトドア派？",
+    options: [
+      { label: "インドア派", value: "indoor" },
+      { label: "アウトドア派", value: "outdoor" },
+    ],
   },
 ];
 
@@ -513,10 +1012,26 @@ function todayKey() {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+/* ---------------- 出題ルートのランダム決定 ---------------- */
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildQuizRoute() {
+  const pickedPool = shuffleArray(QUESTION_POOL).slice(0, ROUTE_POOL_COUNT);
+  return [FIXED_START_QUESTION, ...pickedPool, FIXED_END_QUESTION];
+}
+
 /* ---------------- 状態管理 ---------------- */
 const state = {
   step: 0,
   answers: {},
+  questions: [],
 };
 
 const screens = {
@@ -536,7 +1051,7 @@ const progressBar = document.getElementById("progress-bar");
 
 function renderQuiz() {
   quizStepsEl.innerHTML = "";
-  QUESTIONS.forEach((q, i) => {
+  state.questions.forEach((q, i) => {
     const stepEl = document.createElement("div");
     stepEl.className = "step" + (i === state.step ? " active" : "");
     stepEl.dataset.index = i;
@@ -563,7 +1078,7 @@ function renderQuiz() {
       if (state.answers[q.key] === opt.value) btn.classList.add("selected");
       btn.addEventListener("click", () => {
         state.answers[q.key] = opt.value;
-        if (i < QUESTIONS.length - 1) {
+        if (i < state.questions.length - 1) {
           state.step = i + 1;
           renderQuiz();
         } else {
@@ -576,7 +1091,7 @@ function renderQuiz() {
     quizStepsEl.appendChild(stepEl);
   });
 
-  progressBar.style.width = `${((state.step + 1) / QUESTIONS.length) * 100}%`;
+  progressBar.style.width = `${((state.step + 1) / state.questions.length) * 100}%`;
 }
 
 /* ---------------- 結果算出 ---------------- */
@@ -639,6 +1154,7 @@ function showResult() {
 /* ---------------- イベント ---------------- */
 document.getElementById("btn-start").addEventListener("click", () => {
   state.step = 0;
+  state.questions = buildQuizRoute();
   renderQuiz();
   showScreen("quiz");
 });
