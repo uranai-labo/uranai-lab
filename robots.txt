@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://REPLACE-WITH-YOUR-DOMAIN.example/sitemap.xml
+Sitemap: https://uranai-labo.github.io/uranai-lab/sitemap.xml
+
