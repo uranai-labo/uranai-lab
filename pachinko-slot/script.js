@@ -585,6 +585,13 @@ function pickFromPool(pool, seedStr) {
   return pool[h % pool.length];
 }
 
+// 機種名から台情報サイトの検索結果に飛べるリンクHTMLを作る
+function machineLinkHTML(name, extraClass) {
+  const query = encodeURIComponent(`${name} 機種情報`);
+  const cls = extraClass ? ` class="${extraClass}"` : "";
+  return `<a${cls} href="https://www.google.com/search?q=${query}" target="_blank" rel="noopener">${name}</a>`;
+}
+
 function showResult() {
   const seedStr = `${todayKey()}-${Object.values(state.answers).join("-")}`;
   const hash = hashString(seedStr);
@@ -609,7 +616,7 @@ function showResult() {
   document.getElementById("result-rank").textContent = rank;
   document.getElementById("result-type").textContent =
     `${isPachinko ? "パチンコ" : "スロット"} ／ ${SPEC_LABELS[category][mainSpec]}`;
-  document.getElementById("result-genre").textContent = mainMachine;
+  document.getElementById("result-genre").innerHTML = machineLinkHTML(mainMachine);
   document.getElementById("result-desc").textContent = SPEC_DESC[category][mainSpec];
   document.getElementById("result-advice").textContent = advice;
   document.getElementById("result-lucky").textContent = lucky;
@@ -622,7 +629,7 @@ function showResult() {
     const machine = pickFromPool(pool, `${seedStr}-${specKey}`);
     const li = document.createElement("li");
     li.className = "spec-item" + (specKey === mainSpec ? " spec-item-main" : "");
-    li.innerHTML = `<span class="spec-name">${SPEC_LABELS[category][specKey]}</span><span class="spec-machine">${machine}</span>`;
+    li.innerHTML = `<span class="spec-name">${SPEC_LABELS[category][specKey]}</span><span class="spec-machine">${machineLinkHTML(machine, "spec-machine-link")}</span>`;
     specListEl.appendChild(li);
   });
 

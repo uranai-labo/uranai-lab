@@ -79,8 +79,8 @@ h1{
 }
 .character-avatar{
   flex:none;
-  width:44px;
-  height:44px;
+  width:56px;
+  height:56px;
   border-radius:50%;
   background:linear-gradient(135deg, var(--accent-2), var(--accent));
   display:flex;
@@ -88,6 +88,14 @@ h1{
   justify-content:center;
   font-size:1.3rem;
   box-shadow:0 4px 10px rgba(255,45,120,.3);
+  overflow:hidden;
+}
+.character-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform-origin:40% 22%;
+  transform:scale(3.2);
 }
 .character-name{
   margin:0 0 4px;
@@ -225,6 +233,18 @@ h1{
 #result-genre{
   margin:0 0 10px;
   font-size:1.3rem;
+}
+#result-genre a{
+  color:var(--text);
+  text-decoration:underline;
+  text-decoration-color:var(--accent);
+  text-underline-offset:3px;
+}
+.spec-machine-link{
+  color:var(--text);
+  text-decoration:underline;
+  text-decoration-color:var(--accent-3);
+  text-underline-offset:2px;
 }
 .result-desc{
   color:var(--text-muted);
