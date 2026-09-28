@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>占いラボ | 今日の一手を診断するミニ占いサイト集</title>
+<meta name="description" content="質問に答えるだけで「今日の一手」を教えてくれる、無料の診断・占いサイト集です。">
+<link rel="stylesheet" href="style.css">
+
+<!-- Search Console 所有権確認用（DNSのTXTレコードで確認する場合はこのタグは不要）
+     https://search.google.com/search-console で「プロパティを追加」→「HTMLタグ」を選び、
+     発行されたcontentの値に置き換えてください。 -->
+<meta name="google-site-verification" content="REPLACE_ME_AFTER_SEARCH_CONSOLE_SETUP">
+
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">🔮 占いラボ</div>
+  <p class="tagline">質問に答えるだけで、今日の一手がわかる</p>
+</header>
+
+<main>
+  <div class="card">
+    <h1>今日、何をする？を診断するサイト集</h1>
+    <p class="lead">気分や直感に関する質問に答えていくだけで、今日のおすすめを診断します。ジャンルごとに専用の診断ページがあります。</p>
+
+    <ul class="diag-list">
+      <li>
+        <a class="diag-card" href="./pachinko-slot/">
+          <div class="diag-title">🎰 パチンコ・スロット占い <span class="diag-badge live">公開中</span></div>
+          <div class="diag-desc">今日打つべきパチンコ・スロットの機種を25の質問で診断。友達と行く前の話のタネにも。</div>
+        </a>
+      </li>
+      <li>
+        <div class="diag-card soon">
+          <div class="diag-title">🍽️ 今日のごはん占い <span class="diag-badge soon">準備中</span></div>
+          <div class="diag-desc">気分や体調から、今日の献立をおすすめします。</div>
+        </div>
+      </li>
+      <li>
+        <div class="diag-card soon">
+          <div class="diag-title">🎬 今日の一本占い <span class="diag-badge soon">準備中</span></div>
+          <div class="diag-desc">気分にあった今日観るべき映画・アニメを診断します。</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <p class="footer-links"><a href="./privacy.html">プライバシーポリシー</a>・<a href="./terms.html">利用規約</a></p>
+  <p class="copyright">© 占いラボ</p>
+</footer>
+
+</body>
+</html>
