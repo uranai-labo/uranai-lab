@@ -1124,6 +1124,7 @@ const state = {
   step: 0,
   answers: {},
   questions: [],
+  lastResult: null,
 };
 
 const screens = {
@@ -1255,14 +1256,20 @@ function showResult() {
   const pref = state.answers.genrepref;
   const mainSpec = GENREPREF_TO_SPEC[category][pref] || specKeys[0];
   const mainPool = specGroups[mainSpec];
-  const mainMachine = pickFromPool(mainPool, seedStr);
+  const mainMachineIndex = hash % mainPool.length;
+  const mainMachine = mainPool[mainMachineIndex];
 
   const rankIndex = Math.floor(hash / mainPool.length) % RANKS.length;
   const rank = RANKS[rankIndex];
 
   const advicePool = isPachinko ? ADVICE_POOL_PACHINKO : ADVICE_POOL_SLOT;
-  const advice = advicePool[hash % advicePool.length];
-  const lucky = LUCKY_POOL[Math.floor(hash / 7) % LUCKY_POOL.length];
+  const adviceIndex = hash % advicePool.length;
+  const advice = advicePool[adviceIndex];
+  const luckyIndex = Math.floor(hash / 7) % LUCKY_POOL.length;
+  const lucky = LUCKY_POOL[luckyIndex];
+
+  // シェア用URLを短く保つため、表示テキストそのものではなくインデックスだけを覚えておく
+  state.lastResult = { category, mainSpec, mainMachineIndex, rankIndex, adviceIndex, luckyIndex };
 
   document.getElementById("result-rank").textContent = rank;
   document.getElementById("result-type").textContent =
@@ -1620,16 +1627,20 @@ document.getElementById("btn-retry").addEventListener("click", () => {
   showScreen("intro");
 });
 
-// 結果画面の表示内容をそのままURLのクエリパラメータに埋め込み、共有リンクを開いた相手にも
-// 同じ結果が（再診断や日付のズレに影響されず）そのまま表示されるようにする。
+// 結果を再現するための最小限の情報（インデックスのみ）をURLのクエリパラメータに埋め込み、
+// 共有リンクを開いた相手にも同じ結果がそのまま表示されるようにする。
+// 表示テキストそのものを埋め込むとURLが長大になり、LINE等でリンクが正しく渡らない
+// （URLが長すぎて途切れる・アプリ連携に失敗する）ことがあったため、短い値だけを渡す方式にした。
 function buildShareUrl() {
+  const r = state.lastResult;
+  if (!r) return `${location.origin}${location.pathname}`;
   const params = new URLSearchParams({
-    rank: document.getElementById("result-rank").textContent,
-    type: document.getElementById("result-type").textContent,
-    genre: document.getElementById("result-genre").textContent,
-    desc: document.getElementById("result-desc").textContent,
-    advice: document.getElementById("result-advice").textContent,
-    lucky: document.getElementById("result-lucky").textContent,
+    c: r.category === "pachinko" ? "p" : "s",
+    sp: r.mainSpec,
+    mi: String(r.mainMachineIndex),
+    ri: String(r.rankIndex),
+    ai: String(r.adviceIndex),
+    li: String(r.luckyIndex),
   });
   return `${location.origin}${location.pathname}?${params.toString()}`;
 }
@@ -1654,18 +1665,40 @@ document.getElementById("btn-share-line").addEventListener("click", () => {
   window.open(shareUrl, "_blank", "noopener");
 });
 
-// 共有リンク経由で開かれた場合は、URLのクエリパラメータから結果を復元してそのまま結果画面を表示する
-// （このサイトはSPAでURLが変化しないため、これが無いと共有リンクは常にトップ画面に戻ってしまう）。
+function safeIndex(raw, len) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || len <= 0) return 0;
+  return ((Math.trunc(n) % len) + len) % len;
+}
+
+// 共有リンク経由で開かれた場合は、URLのクエリパラメータ（インデックス）から結果を復元して
+// そのまま結果画面を表示する（このサイトはSPAでURLが変化しないため、これが無いと
+// 共有リンクは常にトップ画面に戻ってしまう）。
 function renderSharedResultFromURL() {
   const params = new URLSearchParams(location.search);
-  if (!params.has("rank") || !params.has("genre")) return;
+  if (!params.has("c") || !params.has("sp") || !params.has("mi")) return;
 
-  document.getElementById("result-rank").textContent = params.get("rank");
-  document.getElementById("result-type").textContent = params.get("type") || "";
-  document.getElementById("result-genre").innerHTML = machineLinkHTML(params.get("genre"));
-  document.getElementById("result-desc").textContent = params.get("desc") || "";
-  document.getElementById("result-advice").textContent = params.get("advice") || "";
-  document.getElementById("result-lucky").textContent = params.get("lucky") || "";
+  const category = params.get("c") === "p" ? "pachinko" : "slot";
+  const isPachinko = category === "pachinko";
+  const specGroups = MACHINES[category];
+  const specKeys = Object.keys(specGroups);
+  const mainSpec = specGroups[params.get("sp")] ? params.get("sp") : specKeys[0];
+  const mainPool = specGroups[mainSpec];
+  const machine = mainPool[safeIndex(params.get("mi"), mainPool.length)];
+
+  const rank = RANKS[safeIndex(params.get("ri"), RANKS.length)];
+
+  const advicePool = isPachinko ? ADVICE_POOL_PACHINKO : ADVICE_POOL_SLOT;
+  const advice = advicePool[safeIndex(params.get("ai"), advicePool.length)];
+  const lucky = LUCKY_POOL[safeIndex(params.get("li"), LUCKY_POOL.length)];
+
+  document.getElementById("result-rank").textContent = rank;
+  document.getElementById("result-type").textContent =
+    `${isPachinko ? "パチンコ" : "スロット"} ／ ${SPEC_LABELS[category][mainSpec]}`;
+  document.getElementById("result-genre").innerHTML = machineLinkHTML(machine);
+  document.getElementById("result-desc").textContent = machineDesc(machine, category, mainSpec);
+  document.getElementById("result-advice").textContent = advice;
+  document.getElementById("result-lucky").textContent = lucky;
 
   document.getElementById("spec-breakdown-block").hidden = true;
   document.getElementById("ad-slot").hidden = true;
