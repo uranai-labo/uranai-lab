@@ -1626,3 +1626,14 @@ document.getElementById("btn-share").addEventListener("click", () => {
   )}&url=${encodeURIComponent(url)}`;
   window.open(shareUrl, "_blank", "noopener");
 });
+
+document.getElementById("btn-share-line").addEventListener("click", () => {
+  const rank = document.getElementById("result-rank").textContent;
+  const genre = document.getElementById("result-genre").textContent;
+  const text = `【${SITE_NAME}】今日の運勢は「${rank}」、おすすめは「${genre}」でした！`;
+  const url = location.href;
+  const shareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(
+    url
+  )}&text=${encodeURIComponent(text)}`;
+  window.open(shareUrl, "_blank", "noopener");
+});
