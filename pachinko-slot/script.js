@@ -778,16 +778,16 @@ const SPEC_LABELS = {
 
 const SPEC_DESC = {
   pachinko: {
-    amadegi: "低投資で長く遊べる、初心者にもやさしいタイプ。数字を狙うより時間を楽しむ日に。",
-    lightmiddle: "甘デジよりやや荒いが、それでも手を出しやすいバランス型。",
-    middle: "確率変動ありでムラはあるが、当たれば波に乗れるスペック。",
-    highspec: "一撃の破壊力が魅力。当たれば大きいが、荒れる覚悟も必要な日に。",
+    amadegi: "低投資で長く遊べる、初心者にもやさしいタイプ。大当たりの分母は大きいが引き戻しは弱めなので、数字を追うより回転数と演出をじっくり楽しみたい日に向いている。",
+    lightmiddle: "甘デジよりやや荒いが、それでも手を出しやすいバランス型。初当たりからの引き戻し率がそこそこあるので、平日の空き時間にも狙いやすい。",
+    middle: "確率変動ありでムラはあるが、当たれば波に乗れるスペック。連チャンが続けば大きいが、ハマる時はとことんハマるので予算配分がカギになる。",
+    highspec: "一撃の破壊力が魅力。当たれば大きいが、荒れる覚悟も必要な日に。継続率と突破率のバランス次第で明暗が分かれる、ギャンブル性の高いタイプじゃ。",
   },
   slot: {
-    normal: "ボーナスのみのシンプル設計。設定狙い・じっくり派に向いているタイプ。",
-    at: "小役の引きと有利区間の管理がカギ。回転数を積み重ねたい日に。",
-    art: "初当たりからの直撃や完走型など、当たれば伸びるタイプ。",
-    smart: "スマスロ機。従来にない有利区間・天井設計で、新しい遊技感覚を試したい日に。",
+    normal: "ボーナスのみのシンプル設計。設定狙い・じっくり派に向いているタイプ。差枚のブレが比較的少なく、長時間コツコツ打ちたい日に安心感がある。",
+    at: "小役の引きと有利区間の管理がカギ。回転数を積み重ねたい日に。ATの継続率と上乗せ性能次第で、まとまった出玉にも期待できるタイプ。",
+    art: "初当たりからの直撃や完走型など、当たれば伸びるタイプ。ワンチャンスをどれだけモノにできるかで収支が大きく変わる、勝負どころが分かりやすい台。",
+    smart: "スマスロ機。従来にない有利区間・天井設計で、新しい遊技感覚を試したい日に。天井狙いと通常時の期待値、両方を意識した立ち回りが求められる。",
   },
 };
 
@@ -1129,12 +1129,36 @@ const state = {
 const screens = {
   intro: document.getElementById("screen-intro"),
   quiz: document.getElementById("screen-quiz"),
+  loading: document.getElementById("screen-loading"),
   result: document.getElementById("screen-result"),
 };
 
 function showScreen(name) {
   Object.values(screens).forEach((el) => el.classList.remove("active"));
   screens[name].classList.add("active");
+}
+
+/* ---------------- 占い中の「溜め」演出 ---------------- */
+const LOADING_MESSAGES = [
+  "ロトさんが占っています…",
+  "水晶玉を覗いています…",
+  "カードをめくっています…",
+  "今日の運勢を読み取っています…",
+];
+
+function startDiagnosis() {
+  showScreen("loading");
+  const loadingTextEl = document.getElementById("loading-text");
+  let msgIndex = 0;
+  loadingTextEl.textContent = LOADING_MESSAGES[0];
+  const intervalId = setInterval(() => {
+    msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
+    loadingTextEl.textContent = LOADING_MESSAGES[msgIndex];
+  }, 550);
+  setTimeout(() => {
+    clearInterval(intervalId);
+    showResult();
+  }, 2000);
 }
 
 /* ---------------- クイズ描画 ---------------- */
@@ -1174,7 +1198,7 @@ function renderQuiz() {
           state.step = i + 1;
           renderQuiz();
         } else {
-          showResult();
+          startDiagnosis();
         }
       });
       stepEl.appendChild(btn);
@@ -1255,6 +1279,12 @@ function showResult() {
   });
 
   showScreen("result");
+
+  // 結果カードの登場アニメーションを毎回リセットして再生する
+  const resultCard = document.querySelector("#screen-result .result-card");
+  resultCard.classList.remove("reveal-anim");
+  void resultCard.offsetWidth;
+  resultCard.classList.add("reveal-anim");
 }
 
 /* ---------------- イベント ---------------- */

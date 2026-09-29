@@ -8,6 +8,8 @@
   --accent-2: #ffb703;
   --accent-3: #7c3aed;
   --radius: 18px;
+  --font-display: "Shippori Mincho", "Hiragino Mincho ProN", serif;
+  --font-rank: "Cinzel Decorative", serif;
 }
 
 *{box-sizing:border-box;}
@@ -21,9 +23,35 @@ body{
 }
 
 .site-header{
+  position:relative;
   text-align:center;
-  padding:32px 16px 16px;
+  padding:32px 16px 20px;
   color:#fff;
+  overflow:hidden;
+}
+.site-header::before,
+.site-header::after{
+  content:"✦";
+  position:absolute;
+  color:#ffe9a8;
+  opacity:.7;
+  animation:twinkle 2.6s ease-in-out infinite;
+}
+.site-header::before{
+  top:14px;
+  left:18%;
+  font-size:.9rem;
+  animation-delay:.3s;
+}
+.site-header::after{
+  top:38px;
+  right:16%;
+  font-size:.6rem;
+  animation-delay:1.1s;
+}
+@keyframes twinkle{
+  0%, 100%{ opacity:.2; transform:scale(.8); }
+  50%{ opacity:.9; transform:scale(1.15); }
 }
 .breadcrumb{
   margin:0 0 10px;
@@ -34,9 +62,10 @@ body{
   color:#e6d9ff;
 }
 .logo{
-  font-size:1.6rem;
-  font-weight:800;
-  letter-spacing:.02em;
+  font-family:var(--font-display);
+  font-size:1.7rem;
+  font-weight:700;
+  letter-spacing:.04em;
 }
 .tagline{
   margin:6px 0 0;
@@ -61,9 +90,11 @@ main{
 }
 
 h1{
-  font-size:1.3rem;
+  font-family:var(--font-display);
+  font-size:1.4rem;
+  font-weight:700;
   margin:0 0 12px;
-  line-height:1.5;
+  line-height:1.6;
 }
 
 /* 占い師キャラクター（ロトさん） */
@@ -172,8 +203,11 @@ h1{
 .step.active{ display:block; }
 
 .step h2{
-  font-size:1.05rem;
+  font-family:var(--font-display);
+  font-size:1.15rem;
+  font-weight:700;
   margin:0 0 18px;
+  line-height:1.6;
 }
 
 .option{
@@ -215,8 +249,9 @@ h1{
   margin:0;
 }
 .result-rank{
-  font-size:3.2rem;
-  font-weight:900;
+  font-family:var(--font-rank);
+  font-size:3.4rem;
+  font-weight:700;
   background:linear-gradient(135deg, var(--accent-2), var(--accent));
   -webkit-background-clip:text;
   background-clip:text;
@@ -231,8 +266,11 @@ h1{
   letter-spacing:.03em;
 }
 #result-genre{
+  font-family:var(--font-display);
   margin:0 0 10px;
-  font-size:1.3rem;
+  font-size:1.35rem;
+  font-weight:700;
+  line-height:1.6;
 }
 #result-genre a{
   color:var(--text);
@@ -354,4 +392,49 @@ h1{
 .copyright{
   margin-top:8px;
   color:#8873ad;
+}
+
+/* 占い中の「溜め」演出 */
+.loading-card{
+  text-align:center;
+  padding:56px 22px;
+}
+.loading-orb{
+  font-size:3.4rem;
+  margin-bottom:18px;
+  animation:orbFloat 1.8s ease-in-out infinite;
+  filter:drop-shadow(0 0 18px rgba(124,58,237,.45));
+}
+@keyframes orbFloat{
+  0%, 100%{ transform:translateY(0) rotate(-4deg); }
+  50%{ transform:translateY(-10px) rotate(4deg); }
+}
+.loading-text{
+  font-family:var(--font-display);
+  font-size:1.05rem;
+  color:var(--text);
+  margin:0;
+}
+
+/* 結果画面の登場アニメーション */
+@keyframes resultReveal{
+  from{ opacity:0; transform:translateY(14px) scale(.97); }
+  to{ opacity:1; transform:none; }
+}
+@keyframes rankPop{
+  0%{ opacity:0; transform:scale(.4); }
+  70%{ opacity:1; transform:scale(1.18); }
+  100%{ transform:scale(1); }
+}
+.reveal-anim{
+  animation:resultReveal .55s cubic-bezier(.22,1,.36,1) both;
+}
+.reveal-anim .result-rank{
+  display:inline-block;
+  animation:rankPop .5s .25s cubic-bezier(.22,1,.36,1) both;
+}
+@media (prefers-reduced-motion: reduce){
+  .reveal-anim, .reveal-anim .result-rank, .loading-orb, .site-header::before, .site-header::after{
+    animation:none;
+  }
 }
