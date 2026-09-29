@@ -1291,19 +1291,33 @@ function showResult() {
 
 /* ---------------- あみだくじコーナー ----------------
    「納得いかない方はこちら」用の再診断。占いのスタンスは崩さず、
-   パチンコ／スロットとスタート位置だけ選んでもらい、あとはロトさんが
-   あみだくじで天に委ねる、という体で結果を出す。結果は真の乱数で決め、
-   メインの日替わり診断とは別枠（何度引いても結果が変わってよい）。 */
-const AMIDA_ROWS = 10;
-const AMIDA_ROW_GAP = 34;
+   パチンコ／スロットとスタート位置を選んでもらった上で、あみだくじの
+   ヨコ線は利用者自身にタップして引いてもらう（運命は自分の手で作る、
+   という体）。結果は真の乱数で決め、メインの日替わり診断とは別枠
+   （何度でも線を引き直してよい）。 */
+const AMIDA_ROWS = 6;
+const AMIDA_ROW_GAP = 40;
 const AMIDA_TOP = 16;
 const AMIDA_COL_X = [30, 100, 170, 240];
 const AMIDA_SVG_WIDTH = 270;
 
-const amidaState = { category: null, start: null };
+const amidaState = { category: null, start: null, rungs: null };
+let amidaDrawn = false;
+
+function amidaEmptyRungs() {
+  return Array.from({ length: AMIDA_ROWS }, () => []);
+}
 
 function amidaCheckReady() {
   document.getElementById("btn-draw-amida").disabled = !(amidaState.category && amidaState.start !== null);
+}
+
+function amidaClearStaleResult() {
+  if (!amidaDrawn) return;
+  amidaDrawn = false;
+  document.getElementById("amida-result").innerHTML = "";
+  const btn = document.getElementById("btn-draw-amida");
+  btn.textContent = "あみだくじを引く！";
 }
 
 function amidaSetupOptions() {
@@ -1312,7 +1326,9 @@ function amidaSetupOptions() {
       document.querySelectorAll("#amida-category-options .option").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       amidaState.category = btn.dataset.value;
+      amidaClearStaleResult();
       amidaCheckReady();
+      renderAmidaGrid();
     });
   });
   document.querySelectorAll("#amida-start-options .option").forEach((btn) => {
@@ -1320,28 +1336,56 @@ function amidaSetupOptions() {
       document.querySelectorAll("#amida-start-options .option").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       amidaState.start = Number(btn.dataset.value);
+      amidaClearStaleResult();
       amidaCheckReady();
+      renderAmidaGrid();
     });
   });
 }
 
-// 各行、隣り合う横棒（ヨコ線）は同時に立てない（例：0-1と1-2が同じ行で交差するのを防ぐ）
-function generateAmidaRungs() {
-  const rungs = [];
-  for (let row = 0; row < AMIDA_ROWS; row++) {
-    const active = [];
-    let gap = 0;
-    while (gap < AMIDA_COL_X.length - 1) {
-      if (Math.random() < 0.5) {
-        active.push(gap);
-        gap += 2;
-      } else {
-        gap += 1;
-      }
-    }
-    rungs.push(active);
+// 利用者がタップしてヨコ線を引くためのグリッド（線が引かれるまでは編集可能）。
+// 同じ行で隣り合うヨコ線（例：0-1と1-2）は同時には引けないようにする。
+function amidaToggleGap(row, gap) {
+  const active = amidaState.rungs[row];
+  const idx = active.indexOf(gap);
+  if (idx !== -1) {
+    active.splice(idx, 1);
+  } else {
+    [gap - 1, gap + 1].forEach((g) => {
+      const i = active.indexOf(g);
+      if (i !== -1) active.splice(i, 1);
+    });
+    active.push(gap);
   }
-  return rungs;
+  renderAmidaGrid();
+}
+
+function renderAmidaGrid() {
+  const bottom = AMIDA_TOP + AMIDA_ROWS * AMIDA_ROW_GAP;
+  const height = bottom + 16;
+  const rungs = amidaState.rungs;
+
+  let svg = `<svg class="amida-svg" viewBox="0 0 ${AMIDA_SVG_WIDTH} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+
+  AMIDA_COL_X.forEach((x, i) => {
+    svg += `<line x1="${x}" y1="${AMIDA_TOP}" x2="${x}" y2="${bottom}" stroke="#e0d4fa" stroke-width="3"/>`;
+    const isStart = amidaState.start === i;
+    svg += `<circle cx="${x}" cy="${AMIDA_TOP}" r="5" fill="${isStart ? "#ff2d78" : "#7c3aed"}"/>`;
+  });
+
+  for (let row = 0; row < AMIDA_ROWS; row++) {
+    const y = AMIDA_TOP + (row + 0.5) * AMIDA_ROW_GAP;
+    for (let gap = 0; gap < AMIDA_COL_X.length - 1; gap++) {
+      const x1 = AMIDA_COL_X[gap];
+      const x2 = AMIDA_COL_X[gap + 1];
+      const active = rungs[row].includes(gap);
+      svg += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${active ? "#ff2d78" : "#e0d4fa"}" stroke-width="${active ? 4 : 2}" stroke-dasharray="${active ? "0" : "4 4"}" pointer-events="none"/>`;
+      svg += `<rect x="${x1}" y="${y - 14}" width="${x2 - x1}" height="28" fill="transparent" style="cursor:pointer" onclick="amidaToggleGap(${row},${gap})"/>`;
+    }
+  }
+
+  svg += `</svg>`;
+  document.getElementById("amida-draw-area").innerHTML = svg;
 }
 
 function traceAmidakuji(rungs, start) {
@@ -1404,12 +1448,30 @@ function renderAmidakuji(rungs, tracePoints) {
   return { animMs: durationSec * 1000 };
 }
 
+function amidaResetScreen() {
+  amidaState.category = null;
+  amidaState.start = null;
+  amidaState.rungs = amidaEmptyRungs();
+  document.querySelectorAll("#screen-amida .option").forEach((b) => b.classList.remove("selected"));
+  document.getElementById("amida-result").innerHTML = "";
+  const btn = document.getElementById("btn-draw-amida");
+  btn.disabled = true;
+  btn.textContent = "あみだくじを引く！";
+  renderAmidaGrid();
+}
+
 document.getElementById("btn-draw-amida").addEventListener("click", () => {
+  if (amidaDrawn) {
+    amidaResetScreen();
+    amidaDrawn = false;
+    return;
+  }
+
   const btn = document.getElementById("btn-draw-amida");
   btn.disabled = true;
   document.getElementById("amida-result").innerHTML = "";
 
-  const rungs = generateAmidaRungs();
+  const rungs = amidaState.rungs;
   const { end, points } = traceAmidakuji(rungs, amidaState.start);
   const { animMs } = renderAmidakuji(rungs, points);
 
@@ -1430,12 +1492,13 @@ document.getElementById("btn-draw-amida").addEventListener("click", () => {
         <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
         <div class="character-bubble">
           <p class="character-name">占い師 ロトさん</p>
-          <p class="character-line">くじが決めたことじゃ。これも天の采配、今日はこれで腹を括ってみるのも一興じゃぞ。</p>
+          <p class="character-line">お前さんが引いた線じゃ。これも天の采配、今日はこれで腹を括ってみるのも一興じゃぞ。</p>
         </div>
       </div>
     `;
     btn.disabled = false;
-    btn.textContent = "もう一度引く";
+    btn.textContent = "もう一度占う（線を引き直す）";
+    amidaDrawn = true;
   }, animMs + 150);
 });
 
@@ -1444,18 +1507,14 @@ document.getElementById("amida-back").addEventListener("click", () => {
 });
 
 document.getElementById("btn-goto-amida").addEventListener("click", () => {
-  amidaState.category = null;
-  amidaState.start = null;
-  document.querySelectorAll("#screen-amida .option").forEach((b) => b.classList.remove("selected"));
-  document.getElementById("amida-draw-area").innerHTML = "";
-  document.getElementById("amida-result").innerHTML = "";
-  const btn = document.getElementById("btn-draw-amida");
-  btn.disabled = true;
-  btn.textContent = "あみだくじを引く！";
+  amidaDrawn = false;
+  amidaResetScreen();
   showScreen("amida");
 });
 
 amidaSetupOptions();
+amidaState.rungs = amidaEmptyRungs();
+renderAmidaGrid();
 
 /* ---------------- 今日が勝負の方はこちら（ギャンブル占い） ----------------
    日本に実在する公営競技・くじを中心に、低確率で違法・グレーな選択肢

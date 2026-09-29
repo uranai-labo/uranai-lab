@@ -8,7 +8,7 @@
   --accent-2: #ffb703;
   --accent-3: #7c3aed;
   --radius: 18px;
-  --font-display: "Hachi Maru Pop", "Hiragino Kaku Gothic ProN", sans-serif;
+  --font-display: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
   --font-rank: "Monoton", cursive;
 }
 
@@ -449,6 +449,12 @@ h2{
   flex:1 1 60px;
   margin-bottom:0;
   text-align:center;
+}
+.amida-hint{
+  color:var(--text-muted);
+  font-size:.78rem;
+  margin:0 0 10px;
+  line-height:1.6;
 }
 .amida-draw-area{
   margin-top:20px;
