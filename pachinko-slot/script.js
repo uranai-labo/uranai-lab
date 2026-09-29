@@ -810,6 +810,22 @@ const MACHINES = {
       "PA花の慶次〜傾奇一転 87ver.",
       "P 魔法少女まどか☆マギカ3 キュゥべえver.",
       "PフィーバークィーンⅡ",
+      {
+        name: "e 化物語 鬼99ver.",
+        desc: "「甘デジ」表記だが、口コミでは大当たりが単発になりやすく投資がかさみやすいとの声が多い台。マイルドさより一撃を狙いたい日向け。",
+      },
+      {
+        name: "Pうしおととら〜神のせSPEC〜100ver.",
+        desc: "口コミでは大当たりが単発になりやすく、体感の荒さを指摘する声が多い台。甘デジの中では波を覚悟したい日に。",
+      },
+      {
+        name: "Pクイーンズブレイド奈落ナナエル79Ver.",
+        desc: "「甘デジの皮を被った一撃狙いの台」と評されることが多く、想定より投資がかさみやすいとの口コミが目立つ。",
+      },
+      {
+        name: "デカスタP戦国無双100ver.",
+        desc: "継続率の高さが謳われる一方、口コミでは体感との乖離を指摘する声が目立つ台。",
+      },
     ],
     lightmiddle: [
       "ソードアート・オンライン アリシゼーション 夜空（京楽）",
@@ -829,6 +845,18 @@ const MACHINES = {
       "ラグナドール 妖しき皇帝と終焉の夜叉姫（メーシー）",
       "新世紀エヴァンゲリオン〜未来への咆哮〜PREMIUM MODEL（ビスティ）",
       "フィーバー機動戦士ガンダムユニコーン再来 129ver.（SANKYO）",
+      {
+        name: "東京リベンジャーズ 聖夜決戦編（サミー）",
+        desc: "口コミでは大きなハマりが報告されることが多く、ライトミドルの中でも体感は重めとの評判。",
+      },
+      {
+        name: "ゾン100〜ゾンビになるまでにしたい100のこと〜（サンセイR&D）",
+        desc: "新台好き・上級者向けと評されることが多く、難易度はライトミドルの中でも高めとの口コミが目立つ台。",
+      },
+      {
+        name: "範馬刃牙 129ver.（アムテックス）",
+        desc: "口コミでは想定よりギャンブル性が強いとの声があり、据え置き狙いなど立ち回りに工夫が必要な台。",
+      },
     ],
     middle: [
       "eリコリス・リコイル（ニューギン）",
@@ -845,6 +873,14 @@ const MACHINES = {
       "e真・一騎当千〜軍神覚醒〜319大入りver.（D-light）",
       "ぱちんこ シン・エヴァンゲリオン Type レイ（ビスティ）",
       "P北斗の拳 暴凶星（サミー）",
+      {
+        name: "eソードアート・オンライン オルタナティブ ガンゲイル・オンライン（大都技研）",
+        desc: "口コミでは安定度の低さ（期待した演出が外れて当たる等、理不尽な当たり方）を指摘する声が目立つ台。",
+      },
+      {
+        name: "e虚構推理（D-light）",
+        desc: "口コミでは想定よりかなり渋いとの評判が多く、ミドルの中でも我慢が必要な台。",
+      },
     ],
     highspec: [
       "Re:ゼロから始める異世界生活 season2（大都技研）",
@@ -858,6 +894,18 @@ const MACHINES = {
       "フィーバー機動戦士ガンダムユニコーン 再来（SANKYO）",
       "フィーバー 機動戦士ガンダムユニコーン（SANKYO）",
       "フィーバー炎炎ノ消防隊（SANKYO）",
+      {
+        name: "フィーバー炎炎ノ消防隊Light ver.（SANKYO）",
+        desc: "口コミでは「甘デジ」に近いマイルドな挙動と評されることが多く、ハイスペックらしい荒さは控えめな台。",
+      },
+      {
+        name: "スーパー海物語IN地中海2（三洋）",
+        desc: "口コミでは「甘デジ」に近い、まったり系の海物語として評価されている台。一撃よりのんびり派向け。",
+      },
+      {
+        name: "スーパー海物語 IN 沖縄5 夜桜超旋風 99ver.（三洋）",
+        desc: "「甘海物語」系のマイルドな台と口コミで評されており、ハイスペックとしては控えめな荒さ。",
+      },
     ],
   },
   slot: {
@@ -902,6 +950,14 @@ const MACHINES = {
       "パチスロ見える子ちゃん",
       "モグモグ風林火山 大海戦の巻",
       "スマスロ リコリス・リコイル",
+      {
+        name: "Lパチスロ 彼女、お借りします",
+        desc: "口コミでは当落バランスに疑問の声が多く、評判が分かれている台。設定・据え置き情報を意識したい。",
+      },
+      {
+        name: "L青春ブタ野郎はバニーガール先輩の夢を見ない",
+        desc: "口コミでは当選率の渋さを指摘する声が多く、天井狙い以外での期待は禁物との評判。",
+      },
     ],
     art: [
       "スマスロ 快盗天使ツインエンジェル2（サミー）",
@@ -1086,8 +1142,21 @@ function pickFromPool(pool, seedStr) {
   return pool[h % pool.length];
 }
 
+// MACHINES の要素は基本は文字列（機種名）だが、口コミ上の実際の評判が
+// そのスペック区分の一般的な説明文（SPEC_DESC）と大きく乖離する機種だけ
+// { name, desc } の形にして、その台専用の説明文を持たせている。
+function machineName(machine) {
+  return typeof machine === "string" ? machine : machine.name;
+}
+
+function machineDesc(machine, category, specKey) {
+  if (typeof machine === "object" && machine.desc) return machine.desc;
+  return SPEC_DESC[category][specKey];
+}
+
 // 機種名から台情報サイトの検索結果に飛べるリンクHTMLを作る
-function machineLinkHTML(name, extraClass) {
+function machineLinkHTML(machine, extraClass) {
+  const name = machineName(machine);
   const query = encodeURIComponent(`${name} 機種情報`);
   const cls = extraClass ? ` class="${extraClass}"` : "";
   return `<a${cls} href="https://www.google.com/search?q=${query}" target="_blank" rel="noopener">${name}</a>`;
@@ -1118,7 +1187,7 @@ function showResult() {
   document.getElementById("result-type").textContent =
     `${isPachinko ? "パチンコ" : "スロット"} ／ ${SPEC_LABELS[category][mainSpec]}`;
   document.getElementById("result-genre").innerHTML = machineLinkHTML(mainMachine);
-  document.getElementById("result-desc").textContent = SPEC_DESC[category][mainSpec];
+  document.getElementById("result-desc").textContent = machineDesc(mainMachine, category, mainSpec);
   document.getElementById("result-advice").textContent = advice;
   document.getElementById("result-lucky").textContent = lucky;
 
