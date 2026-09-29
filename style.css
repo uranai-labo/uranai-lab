@@ -8,8 +8,8 @@
   --accent-2: #ffb703;
   --accent-3: #7c3aed;
   --radius: 18px;
-  --font-display: "Shippori Mincho", "Hiragino Mincho ProN", serif;
-  --font-rank: "Cinzel Decorative", serif;
+  --font-display: "Hachi Maru Pop", "Hiragino Kaku Gothic ProN", sans-serif;
+  --font-rank: "Monoton", cursive;
 }
 
 *{box-sizing:border-box;}
