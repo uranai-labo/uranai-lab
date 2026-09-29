@@ -1089,6 +1089,22 @@ const LUCKY_POOL = [
 
 const RANKS = ["SS", "S", "A", "B", "C"];
 
+// 結果画面に出す「今日のあなたの二つ名」。CATCHPHRASE_MOD×CATCHPHRASE_NOUNの
+// 掛け合わせ（形容詞的な修飾語＋名詞）で作るため、被りにくい組み合わせを
+// 少ない語数（24×24＝576通り）で確保できる。
+const CATCHPHRASE_MOD = [
+  "熱き", "静寂なる", "荒ぶる", "眠れる", "煌めく", "揺るぎない",
+  "気まぐれな", "底知れぬ", "一途な", "疾き", "不敵な", "華麗なる",
+  "孤高の", "破天荒な", "直感型の", "百戦錬磨の", "一撃必殺の", "波乱万丈の",
+  "天性の", "覚醒せし", "幸運纏う", "執念の", "自由奔放な", "常勝の",
+];
+const CATCHPHRASE_NOUN = [
+  "求道者", "支配者", "猛獣", "幸運児", "勝負師", "狙撃手",
+  "挑戦者", "賭博師", "旅人", "開拓者", "探求者", "職人",
+  "遊び人", "導師", "覇者", "策士", "夢追い人", "一発屋",
+  "立ち回り師", "直感人間", "読み師", "無双", "台選びの達人", "伝道師",
+];
+
 /* ---------------- 簡易ハッシュ（日付＋回答で決定論的に算出） ---------------- */
 function hashString(str) {
   let h = 0;
@@ -1268,12 +1284,17 @@ function showResult() {
   const luckyIndex = Math.floor(hash / 7) % LUCKY_POOL.length;
   const lucky = LUCKY_POOL[luckyIndex];
 
+  const catchModIndex = Math.floor(hash / 17) % CATCHPHRASE_MOD.length;
+  const catchNounIndex = Math.floor(hash / 101) % CATCHPHRASE_NOUN.length;
+  const catchphrase = CATCHPHRASE_MOD[catchModIndex] + CATCHPHRASE_NOUN[catchNounIndex];
+
   // シェア用URLを短く保つため、表示テキストそのものではなくインデックスだけを覚えておく
-  state.lastResult = { category, mainSpec, mainMachineIndex, rankIndex, adviceIndex, luckyIndex };
+  state.lastResult = { category, mainSpec, mainMachineIndex, rankIndex, adviceIndex, luckyIndex, catchModIndex, catchNounIndex };
 
   document.getElementById("result-rank").textContent = rank;
   document.getElementById("result-type").textContent =
     `${isPachinko ? "パチンコ" : "スロット"} ／ ${SPEC_LABELS[category][mainSpec]}`;
+  document.getElementById("result-catchphrase").textContent = `二つ名：${catchphrase}`;
   document.getElementById("result-genre").innerHTML = machineLinkHTML(mainMachine);
   document.getElementById("result-desc").textContent = machineDesc(mainMachine, category, mainSpec);
   document.getElementById("result-advice").textContent = advice;
@@ -1645,6 +1666,8 @@ function buildShareUrl() {
     ri: String(r.rankIndex),
     ai: String(r.adviceIndex),
     li: String(r.luckyIndex),
+    cm: String(r.catchModIndex),
+    cn: String(r.catchNounIndex),
   });
   return `${location.origin}${location.pathname}?${params.toString()}`;
 }
@@ -1652,7 +1675,8 @@ function buildShareUrl() {
 document.getElementById("btn-share").addEventListener("click", () => {
   const rank = document.getElementById("result-rank").textContent;
   const genre = document.getElementById("result-genre").textContent;
-  const text = `【${SITE_NAME}】今日の運勢は「${rank}」、おすすめは「${genre}」でした！`;
+  const catchphrase = document.getElementById("result-catchphrase").textContent;
+  const text = `【${SITE_NAME}】${catchphrase}のあなたへ。今日の運勢は「${rank}」、おすすめは「${genre}」でした！`;
   const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     text
   )}&url=${encodeURIComponent(buildShareUrl())}`;
@@ -1662,7 +1686,8 @@ document.getElementById("btn-share").addEventListener("click", () => {
 document.getElementById("btn-share-line").addEventListener("click", () => {
   const rank = document.getElementById("result-rank").textContent;
   const genre = document.getElementById("result-genre").textContent;
-  const text = `【${SITE_NAME}】今日の運勢は「${rank}」、おすすめは「${genre}」でした！`;
+  const catchphrase = document.getElementById("result-catchphrase").textContent;
+  const text = `【${SITE_NAME}】${catchphrase}のあなたへ。今日の運勢は「${rank}」、おすすめは「${genre}」でした！`;
   const shareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(
     buildShareUrl()
   )}&text=${encodeURIComponent(text)}`;
@@ -1695,10 +1720,14 @@ function renderSharedResultFromURL() {
   const advicePool = isPachinko ? ADVICE_POOL_PACHINKO : ADVICE_POOL_SLOT;
   const advice = advicePool[safeIndex(params.get("ai"), advicePool.length)];
   const lucky = LUCKY_POOL[safeIndex(params.get("li"), LUCKY_POOL.length)];
+  const catchphrase =
+    CATCHPHRASE_MOD[safeIndex(params.get("cm"), CATCHPHRASE_MOD.length)] +
+    CATCHPHRASE_NOUN[safeIndex(params.get("cn"), CATCHPHRASE_NOUN.length)];
 
   document.getElementById("result-rank").textContent = rank;
   document.getElementById("result-type").textContent =
     `${isPachinko ? "パチンコ" : "スロット"} ／ ${SPEC_LABELS[category][mainSpec]}`;
+  document.getElementById("result-catchphrase").textContent = `二つ名：${catchphrase}`;
   document.getElementById("result-genre").innerHTML = machineLinkHTML(machine);
   document.getElementById("result-desc").textContent = machineDesc(machine, category, mainSpec);
   document.getElementById("result-advice").textContent = advice;
