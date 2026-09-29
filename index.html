@@ -50,6 +50,9 @@
       <p class="lead">パチンコ・スロット、気分、血液型、星座など、たくさんの質問の中から毎回ランダムに出題される診断で、今日全国のホールで狙うべき実在の機種を占います。<br>友達と行く前の話のタネにもどうぞ。</p>
       <button class="btn-primary" id="btn-start">占いを始める（無料・登録不要）</button>
       <p class="note">※本診断はエンタメ目的です。当たり・出玉を保証するものではありません。</p>
+      <div class="alt-links">
+        <button class="link-btn" id="btn-goto-gamble">🔥 今日が勝負の方はこちら</button>
+      </div>
     </div>
   </section>
 
@@ -103,10 +106,89 @@
         <p>ここに近隣ホール情報・アプリ・攻略サイトなどのアフィリエイトリンクを設置予定</p>
       </div>
 
+      <div class="alt-links">
+        <button class="link-btn" id="btn-goto-amida">🤔 この結果に納得いかない方はこちら（あみだくじで再診断）</button>
+      </div>
+
       <div class="result-actions">
         <button class="btn-secondary" id="btn-share">結果をXでシェア</button>
         <button class="btn-primary" id="btn-retry">もう一度占う</button>
       </div>
+    </div>
+  </section>
+
+  <!-- あみだくじコーナー -->
+  <section id="screen-amida" class="screen">
+    <div class="card">
+      <button class="step-back" id="amida-back">← トップに戻る</button>
+      <div class="character-intro">
+        <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
+        <div class="character-bubble">
+          <p class="character-name">占い師 ロトさん</p>
+          <p class="character-line">納得いかんかったか。ならばあみだくじで天に委ねてみるのも占いのうちじゃ。まずは2つだけ答えるんじゃぞ。</p>
+        </div>
+      </div>
+
+      <div class="amida-question">
+        <h2>パチンコ？スロット？</h2>
+        <div class="amida-options" id="amida-category-options">
+          <button class="option" data-value="pachinko">パチンコ</button>
+          <button class="option" data-value="slot">スロット</button>
+        </div>
+      </div>
+
+      <div class="amida-question">
+        <h2>直感でスタート位置を選んで</h2>
+        <div class="amida-options" id="amida-start-options">
+          <button class="option" data-value="0">1</button>
+          <button class="option" data-value="1">2</button>
+          <button class="option" data-value="2">3</button>
+          <button class="option" data-value="3">4</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-draw-amida" disabled>あみだくじを引く！</button>
+
+      <div id="amida-draw-area" class="amida-draw-area"></div>
+      <div id="amida-result"></div>
+    </div>
+  </section>
+
+  <!-- 今日が勝負の方はこちら（ギャンブル占い） -->
+  <section id="screen-gamble" class="screen">
+    <div class="card">
+      <button class="step-back" id="gamble-back">← トップに戻る</button>
+      <div class="character-intro">
+        <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
+        <div class="character-bubble">
+          <p class="character-name">占い師 ロトさん</p>
+          <p class="character-line">今日が勝負の日じゃな。お前さんの生まれと名前を寄越すんじゃ。今日やるべきギャンブルを占ってやろう。</p>
+        </div>
+      </div>
+
+      <form id="gamble-form" class="gamble-form">
+        <label>生年月日
+          <input type="date" id="gamble-birthdate" required>
+        </label>
+        <label>名前（ひらがな）
+          <input type="text" id="gamble-name" placeholder="たろう" required>
+        </label>
+        <label>年齢
+          <input type="number" id="gamble-age" min="1" max="120" required>
+        </label>
+        <label>性別
+          <select id="gamble-gender">
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+            <option value="other">回答しない</option>
+          </select>
+        </label>
+        <button type="submit" class="btn-primary">占う</button>
+      </form>
+
+      <p class="note">※公営競技・宝くじ等は20歳未満は購入できません。</p>
+
+      <div id="gamble-result"></div>
     </div>
   </section>
 

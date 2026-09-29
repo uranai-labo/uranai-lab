@@ -82,8 +82,7 @@ main{
 }
 
 h1{
-  font-family:var(--font-display);
-  font-size:1.4rem;
+  font-size:1.25rem;
   font-weight:700;
   margin:0 0 12px;
   line-height:1.6;
@@ -412,6 +411,97 @@ h2{
   .reveal-anim, .reveal-anim .result-rank, .loading-orb, .site-header::before, .site-header::after{
     animation:none;
   }
+}
+
+/* 別コーナーへの導線リンク */
+.alt-links{
+  margin-top:14px;
+  text-align:center;
+}
+.link-btn{
+  background:none;
+  border:none;
+  color:var(--accent-3);
+  font-size:.82rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:4px;
+}
+
+/* あみだくじコーナー */
+.amida-question{
+  margin-bottom:18px;
+}
+.amida-question h2{
+  font-size:.95rem;
+  margin:0 0 10px;
+}
+.amida-options{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.amida-options .option{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:auto;
+  flex:1 1 60px;
+  margin-bottom:0;
+  text-align:center;
+}
+.amida-draw-area{
+  margin-top:20px;
+  text-align:center;
+}
+.amida-svg{
+  width:100%;
+  max-width:320px;
+  height:auto;
+}
+.amida-labels{
+  display:flex;
+  justify-content:space-between;
+  max-width:320px;
+  margin:6px auto 0;
+  font-size:.72rem;
+  color:var(--text-muted);
+  text-align:center;
+}
+.amida-labels span{
+  flex:1;
+}
+
+/* ギャンブル占いコーナー */
+.gamble-form{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.gamble-form label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:.85rem;
+  color:var(--text-muted);
+}
+.gamble-form input,
+.gamble-form select{
+  font-size:.95rem;
+  padding:10px 12px;
+  border-radius:10px;
+  border:2px solid #efe6ff;
+  color:var(--text);
+  font-family:inherit;
+}
+.joke-disclaimer{
+  margin-top:10px;
+  font-size:.72rem;
+  line-height:1.6;
+  color:var(--text-muted);
+  background:#faf5ff;
+  border-radius:10px;
+  padding:10px 12px;
 }
 
 /* 規約・プライバシーポリシーページ用 */

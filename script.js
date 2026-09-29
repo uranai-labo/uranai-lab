@@ -1131,6 +1131,8 @@ const screens = {
   quiz: document.getElementById("screen-quiz"),
   loading: document.getElementById("screen-loading"),
   result: document.getElementById("screen-result"),
+  amida: document.getElementById("screen-amida"),
+  gamble: document.getElementById("screen-gamble"),
 };
 
 function showScreen(name) {
@@ -1286,6 +1288,260 @@ function showResult() {
   void resultCard.offsetWidth;
   resultCard.classList.add("reveal-anim");
 }
+
+/* ---------------- あみだくじコーナー ----------------
+   「納得いかない方はこちら」用の再診断。占いのスタンスは崩さず、
+   パチンコ／スロットとスタート位置だけ選んでもらい、あとはロトさんが
+   あみだくじで天に委ねる、という体で結果を出す。結果は真の乱数で決め、
+   メインの日替わり診断とは別枠（何度引いても結果が変わってよい）。 */
+const AMIDA_ROWS = 10;
+const AMIDA_ROW_GAP = 34;
+const AMIDA_TOP = 16;
+const AMIDA_COL_X = [30, 100, 170, 240];
+const AMIDA_SVG_WIDTH = 270;
+
+const amidaState = { category: null, start: null };
+
+function amidaCheckReady() {
+  document.getElementById("btn-draw-amida").disabled = !(amidaState.category && amidaState.start !== null);
+}
+
+function amidaSetupOptions() {
+  document.querySelectorAll("#amida-category-options .option").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#amida-category-options .option").forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      amidaState.category = btn.dataset.value;
+      amidaCheckReady();
+    });
+  });
+  document.querySelectorAll("#amida-start-options .option").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#amida-start-options .option").forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      amidaState.start = Number(btn.dataset.value);
+      amidaCheckReady();
+    });
+  });
+}
+
+// 各行、隣り合う横棒（ヨコ線）は同時に立てない（例：0-1と1-2が同じ行で交差するのを防ぐ）
+function generateAmidaRungs() {
+  const rungs = [];
+  for (let row = 0; row < AMIDA_ROWS; row++) {
+    const active = [];
+    let gap = 0;
+    while (gap < AMIDA_COL_X.length - 1) {
+      if (Math.random() < 0.5) {
+        active.push(gap);
+        gap += 2;
+      } else {
+        gap += 1;
+      }
+    }
+    rungs.push(active);
+  }
+  return rungs;
+}
+
+function traceAmidakuji(rungs, start) {
+  let col = start;
+  const points = [{ x: AMIDA_COL_X[col], y: AMIDA_TOP }];
+  rungs.forEach((active, row) => {
+    const rungY = AMIDA_TOP + (row + 0.5) * AMIDA_ROW_GAP;
+    const nextY = AMIDA_TOP + (row + 1) * AMIDA_ROW_GAP;
+    let newCol = col;
+    if (active.includes(col)) newCol = col + 1;
+    else if (active.includes(col - 1)) newCol = col - 1;
+    if (newCol !== col) {
+      points.push({ x: AMIDA_COL_X[col], y: rungY });
+      points.push({ x: AMIDA_COL_X[newCol], y: rungY });
+      col = newCol;
+    }
+    points.push({ x: AMIDA_COL_X[col], y: nextY });
+  });
+  return { end: col, points };
+}
+
+function renderAmidakuji(rungs, tracePoints) {
+  const bottom = AMIDA_TOP + AMIDA_ROWS * AMIDA_ROW_GAP;
+  const height = bottom + 16;
+
+  let svg = `<svg class="amida-svg" viewBox="0 0 ${AMIDA_SVG_WIDTH} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+
+  AMIDA_COL_X.forEach((x) => {
+    svg += `<line x1="${x}" y1="${AMIDA_TOP}" x2="${x}" y2="${bottom}" stroke="#e0d4fa" stroke-width="3"/>`;
+  });
+
+  rungs.forEach((active, row) => {
+    const y = AMIDA_TOP + (row + 0.5) * AMIDA_ROW_GAP;
+    active.forEach((gap) => {
+      svg += `<line x1="${AMIDA_COL_X[gap]}" y1="${y}" x2="${AMIDA_COL_X[gap + 1]}" y2="${y}" stroke="#e0d4fa" stroke-width="3"/>`;
+    });
+  });
+
+  const d = tracePoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  svg += `<path id="amida-trace-path" d="${d}" fill="none" stroke="#ff2d78" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  AMIDA_COL_X.forEach((x) => {
+    svg += `<circle cx="${x}" cy="${AMIDA_TOP}" r="5" fill="#7c3aed"/>`;
+  });
+
+  svg += `</svg>`;
+
+  const area = document.getElementById("amida-draw-area");
+  area.innerHTML = svg;
+
+  const path = document.getElementById("amida-trace-path");
+  const length = path.getTotalLength();
+  const durationSec = Math.min(1.6, 0.15 * AMIDA_ROWS);
+  path.style.strokeDasharray = String(length);
+  path.style.strokeDashoffset = String(length);
+  void path.getBoundingClientRect();
+  path.style.transition = `stroke-dashoffset ${durationSec}s ease-in-out`;
+  path.style.strokeDashoffset = "0";
+
+  return { animMs: durationSec * 1000 };
+}
+
+document.getElementById("btn-draw-amida").addEventListener("click", () => {
+  const btn = document.getElementById("btn-draw-amida");
+  btn.disabled = true;
+  document.getElementById("amida-result").innerHTML = "";
+
+  const rungs = generateAmidaRungs();
+  const { end, points } = traceAmidakuji(rungs, amidaState.start);
+  const { animMs } = renderAmidakuji(rungs, points);
+
+  const category = amidaState.category;
+  const specKeys = Object.keys(MACHINES[category]);
+  const specKey = specKeys[end];
+  const pool = MACHINES[category][specKey];
+  const machine = pool[Math.floor(Math.random() * pool.length)];
+
+  setTimeout(() => {
+    document.getElementById("amida-result").innerHTML = `
+      <div class="result-block">
+        <h3>あみだくじの結果</h3>
+        <p><strong>${SPEC_LABELS[category][specKey]}</strong>／${machineLinkHTML(machine)}</p>
+        <p>${machineDesc(machine, category, specKey)}</p>
+      </div>
+      <div class="character-intro character-intro-result">
+        <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
+        <div class="character-bubble">
+          <p class="character-name">占い師 ロトさん</p>
+          <p class="character-line">くじが決めたことじゃ。これも天の采配、今日はこれで腹を括ってみるのも一興じゃぞ。</p>
+        </div>
+      </div>
+    `;
+    btn.disabled = false;
+    btn.textContent = "もう一度引く";
+  }, animMs + 150);
+});
+
+document.getElementById("amida-back").addEventListener("click", () => {
+  showScreen("intro");
+});
+
+document.getElementById("btn-goto-amida").addEventListener("click", () => {
+  amidaState.category = null;
+  amidaState.start = null;
+  document.querySelectorAll("#screen-amida .option").forEach((b) => b.classList.remove("selected"));
+  document.getElementById("amida-draw-area").innerHTML = "";
+  document.getElementById("amida-result").innerHTML = "";
+  const btn = document.getElementById("btn-draw-amida");
+  btn.disabled = true;
+  btn.textContent = "あみだくじを引く！";
+  showScreen("amida");
+});
+
+amidaSetupOptions();
+
+/* ---------------- 今日が勝負の方はこちら（ギャンブル占い） ----------------
+   日本に実在する公営競技・くじを中心に、低確率で違法・グレーな選択肢
+  （賭け花札・賭けポーカー・オンラインカジノ・賭けバカラ・賭け麻雀）も
+   ネタ枠として交ぜてある。出た場合は「（捕まるけどな）」と表示し、
+   賭博罪など実際の法的リスクを明記する。誕生日・名前などから毎日決まる
+   結果になるが、あくまで占い・エンタメであり特定の賭け事の推奨ではない。 */
+const GAMBLE_LEGAL = [
+  { name: "中央競馬（JRA）", desc: "パドックでの馬の気配、そして直感を信じるんじゃぞ。レース前の腹ごしらえも大事にな。" },
+  { name: "地方競馬", desc: "ナイター開催の独特な空気がお前さんを呼んでおる。人気薄の一発に賭けてみたい日じゃな。" },
+  { name: "競輪", desc: "選手の脚質とラインの動きをよく読むんじゃぞ。今日は先行選手に目をかけてみるといい。" },
+  { name: "ボートレース（競艇）", desc: "スタートのタイミングと進入コースが全てじゃ。イン逃げの堅い舟に注目じゃな。" },
+  { name: "オートレース", desc: "バンクの荒れ具合と実力者のスタートダッシュがカギじゃぞ。" },
+  { name: "toto・BIG（サッカーくじ）", desc: "一攫千金を狙うなら今日じゃな。直感で選んだ組み合わせが案外強いぞ。" },
+  { name: "宝くじ（ジャンボ宝くじ等）", desc: "売り場選びから運試しじゃ。今日はいつもと違う売り場で買ってみるといいだろう。" },
+  { name: "ロト6・ロト7・ナンバーズ", desc: "数字選びに直感を信じるんじゃぞ。誕生日の数字を絡めてみるのも悪くない。" },
+  { name: "パチンコ・スロット", desc: "結局ここに戻ってくるんじゃな。今日はホールでじっくり勝負してみるといいぞ。" },
+];
+
+const GAMBLE_JOKE = [
+  { name: "賭け花札", desc: "懐かしの手役で盛り上がりそうな日じゃが……" },
+  { name: "賭けポーカー", desc: "ブラフの読み合いで盛り上がりそうな日じゃが……" },
+  { name: "オンラインカジノ", desc: "画面の向こうのディーラーに呼ばれておる気がするが……" },
+  { name: "賭けバカラ", desc: "シンプルな駆け引きに吸い込まれそうな日じゃが……" },
+  { name: "賭け麻雀（レート有り）", desc: "牌の音に誘われそうな日じゃが……" },
+];
+
+function buildGamblePool() {
+  const pool = [];
+  GAMBLE_LEGAL.forEach((item) => {
+    for (let i = 0; i < 20; i++) pool.push(item);
+  });
+  GAMBLE_JOKE.forEach((item) => {
+    for (let i = 0; i < 2; i++) pool.push({ ...item, joke: true });
+  });
+  return pool;
+}
+const GAMBLE_POOL = buildGamblePool();
+
+document.getElementById("btn-goto-gamble").addEventListener("click", () => {
+  showScreen("gamble");
+});
+
+document.getElementById("gamble-back").addEventListener("click", () => {
+  showScreen("intro");
+});
+
+document.getElementById("gamble-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const birthdate = document.getElementById("gamble-birthdate").value;
+  const name = document.getElementById("gamble-name").value.trim();
+  const age = document.getElementById("gamble-age").value;
+  const gender = document.getElementById("gamble-gender").value;
+
+  const seedStr = `${todayKey()}-${birthdate}-${name}-${age}-${gender}`;
+  const hash = hashString(seedStr);
+  const pick = GAMBLE_POOL[hash % GAMBLE_POOL.length];
+
+  let html = `
+    <div class="character-intro character-intro-result">
+      <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
+      <div class="character-bubble">
+        <p class="character-name">占い師 ロトさん</p>
+        <p class="character-line">${name}さんや、今日のお前さんに向いておるのは「${pick.name}」じゃ。${pick.desc}</p>
+      </div>
+    </div>
+    <div class="result-block">
+      <h3>🎲 今日の一手</h3>
+      <p>${pick.name}</p>
+    </div>
+  `;
+
+  if (pick.joke) {
+    html += `
+      <p class="joke-disclaimer">
+        （捕まるけどな）<br>
+        ${pick.name}を含む賭博は、賭博場を開いた側だけでなく参加者自身も刑法185〜187条の賭博罪の対象になり、単純賭博でも50万円以下の罰金、常習と判断されれば3年以下の懲役が科されうる。オンラインカジノは運営元が海外で合法な業者でも、日本国内からアクセスして遊べば違法という扱いは変わらず、近年は摘発件数も急増している（2025年の法改正では広告そのものも規制対象になった）。この結果はあくまで占いの余興であり、これらの行為を勧めるものでは一切ない。
+      </p>
+    `;
+  }
+
+  html += `<p class="note">※この診断は占い・エンタメ目的であり、特定の賭け事の実施や結果を推奨・保証するものではありません。公営競技・宝くじ等は20歳未満は購入できません。オンラインカジノ等の違法な賭博への参加は法律で禁止されています。</p>`;
+
+  document.getElementById("gamble-result").innerHTML = html;
+});
 
 /* ---------------- イベント ---------------- */
 document.getElementById("btn-start").addEventListener("click", () => {
