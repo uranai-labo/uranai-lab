@@ -1239,6 +1239,10 @@ function machineLinkHTML(machine, extraClass) {
 }
 
 function showResult() {
+  document.getElementById("spec-breakdown-block").hidden = false;
+  document.getElementById("ad-slot").hidden = false;
+  document.getElementById("shared-cta").hidden = true;
+
   const seedStr = `${todayKey()}-${Object.values(state.answers).join("-")}`;
   const hash = hashString(seedStr);
 
@@ -1616,14 +1620,27 @@ document.getElementById("btn-retry").addEventListener("click", () => {
   showScreen("intro");
 });
 
+// 結果画面の表示内容をそのままURLのクエリパラメータに埋め込み、共有リンクを開いた相手にも
+// 同じ結果が（再診断や日付のズレに影響されず）そのまま表示されるようにする。
+function buildShareUrl() {
+  const params = new URLSearchParams({
+    rank: document.getElementById("result-rank").textContent,
+    type: document.getElementById("result-type").textContent,
+    genre: document.getElementById("result-genre").textContent,
+    desc: document.getElementById("result-desc").textContent,
+    advice: document.getElementById("result-advice").textContent,
+    lucky: document.getElementById("result-lucky").textContent,
+  });
+  return `${location.origin}${location.pathname}?${params.toString()}`;
+}
+
 document.getElementById("btn-share").addEventListener("click", () => {
   const rank = document.getElementById("result-rank").textContent;
   const genre = document.getElementById("result-genre").textContent;
   const text = `【${SITE_NAME}】今日の運勢は「${rank}」、おすすめは「${genre}」でした！`;
-  const url = location.href;
   const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     text
-  )}&url=${encodeURIComponent(url)}`;
+  )}&url=${encodeURIComponent(buildShareUrl())}`;
   window.open(shareUrl, "_blank", "noopener");
 });
 
@@ -1631,9 +1648,44 @@ document.getElementById("btn-share-line").addEventListener("click", () => {
   const rank = document.getElementById("result-rank").textContent;
   const genre = document.getElementById("result-genre").textContent;
   const text = `【${SITE_NAME}】今日の運勢は「${rank}」、おすすめは「${genre}」でした！`;
-  const url = location.href;
   const shareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(
-    url
+    buildShareUrl()
   )}&text=${encodeURIComponent(text)}`;
   window.open(shareUrl, "_blank", "noopener");
 });
+
+// 共有リンク経由で開かれた場合は、URLのクエリパラメータから結果を復元してそのまま結果画面を表示する
+// （このサイトはSPAでURLが変化しないため、これが無いと共有リンクは常にトップ画面に戻ってしまう）。
+function renderSharedResultFromURL() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has("rank") || !params.has("genre")) return;
+
+  document.getElementById("result-rank").textContent = params.get("rank");
+  document.getElementById("result-type").textContent = params.get("type") || "";
+  document.getElementById("result-genre").innerHTML = machineLinkHTML(params.get("genre"));
+  document.getElementById("result-desc").textContent = params.get("desc") || "";
+  document.getElementById("result-advice").textContent = params.get("advice") || "";
+  document.getElementById("result-lucky").textContent = params.get("lucky") || "";
+
+  document.getElementById("spec-breakdown-block").hidden = true;
+  document.getElementById("ad-slot").hidden = true;
+  document.getElementById("shared-cta").hidden = false;
+
+  history.replaceState(null, "", location.pathname);
+
+  showScreen("result");
+  const resultCard = document.querySelector("#screen-result .result-card");
+  resultCard.classList.remove("reveal-anim");
+  void resultCard.offsetWidth;
+  resultCard.classList.add("reveal-anim");
+}
+
+document.getElementById("btn-start-from-shared").addEventListener("click", () => {
+  state.step = 0;
+  state.answers = {};
+  state.questions = buildQuizRoute();
+  renderQuiz();
+  showScreen("quiz");
+});
+
+renderSharedResultFromURL();

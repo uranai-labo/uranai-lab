@@ -103,7 +103,7 @@
         <p id="result-lucky"></p>
       </div>
 
-      <div class="result-block">
+      <div class="result-block" id="spec-breakdown-block">
         <h3>📊 スペック別・今日のおすすめ一覧</h3>
         <p class="spec-note">「甘デジを打ちたい」「ハイミドルなら」など、区分ごとに今日のイチオシを表示します。</p>
         <ul id="spec-list" class="spec-list"></ul>
@@ -113,6 +113,13 @@
       <div id="ad-slot" class="ad-slot">
         <p class="ad-slot-label">PR</p>
         <p>ここに近隣ホール情報・アプリ・攻略サイトなどのアフィリエイトリンクを設置予定</p>
+      </div>
+
+      <!-- 共有リンクから開いた人向けの案内（自分で占うと通常のスペック別一覧・広告枠が見られる） -->
+      <div class="result-block" id="shared-cta" hidden>
+        <h3>👀 友達の結果を見ているんじゃな</h3>
+        <p>お前さんも占ってみるかや？</p>
+        <button class="btn-primary" id="btn-start-from-shared">自分も占ってみる</button>
       </div>
 
       <div class="alt-links">
