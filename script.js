@@ -1377,6 +1377,7 @@ function showResult() {
   document.getElementById("result-genre").innerHTML = machineLinkHTML(mainMachine);
   document.getElementById("result-desc").textContent = machineDesc(mainMachine, category, mainSpec);
   document.getElementById("result-review").innerHTML = reviewBoxHTML(mainMachine);
+  renderVoteBox(document.getElementById("result-vote"), mainMachine);
   document.getElementById("result-advice").textContent = advice;
   document.getElementById("result-lucky").textContent = lucky;
 
@@ -1610,6 +1611,7 @@ document.getElementById("btn-draw-amida").addEventListener("click", () => {
         <p><strong>${SPEC_LABELS[category][specKey]}</strong>／${machineLinkHTML(machine)}</p>
         <p>${machineDesc(machine, category, specKey)}</p>
         ${reviewBoxHTML(machine)}
+        <div id="amida-vote"></div>
       </div>
       <div class="character-intro character-intro-result">
         <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
@@ -1620,6 +1622,7 @@ document.getElementById("btn-draw-amida").addEventListener("click", () => {
       </div>
       <div class="ad-slot">${adBlockHTML([["hunter", "引いた線の続きは、こちらで運試し。"], ["hapitas", "軍資金づくりに、ポイントサイト"]], "amida")}</div>
     `;
+    renderVoteBox(document.getElementById("amida-vote"), machine);
     track("amida_result", { category });
     btn.disabled = false;
     btn.textContent = "もう一度占う（線を引き直す）";
@@ -1838,6 +1841,7 @@ function renderSharedResultFromURL() {
   document.getElementById("result-genre").innerHTML = machineLinkHTML(machine);
   document.getElementById("result-desc").textContent = machineDesc(machine, category, mainSpec);
   document.getElementById("result-review").innerHTML = reviewBoxHTML(machine);
+  renderVoteBox(document.getElementById("result-vote"), machine);
   document.getElementById("result-advice").textContent = advice;
   document.getElementById("result-lucky").textContent = lucky;
 
