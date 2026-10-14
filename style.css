@@ -560,6 +560,39 @@ h2{
   text-decoration:none;
 }
 
+/* サイト説明（SEO用の静的テキスト） */
+.about{
+  max-width:480px;
+  margin:12px auto 0;
+  padding:0 20px;
+  color:#e6d9ff;
+  font-size:.82rem;
+  line-height:1.8;
+}
+.about h2{
+  font-size:.95rem;
+  margin:0 0 8px;
+  color:#fff;
+}
+.about h3{
+  font-size:.82rem;
+  margin:14px 0 4px;
+  color:#ffd666;
+}
+.about p{ margin:0 0 8px; }
+.about details{
+  margin-top:10px;
+  border:1px solid #3a2763;
+  border-radius:12px;
+  padding:10px 14px;
+  background:rgba(255,255,255,.03);
+}
+.about summary{
+  cursor:pointer;
+  font-weight:700;
+  color:#fff;
+}
+
 .site-footer{
   max-width:480px;
   margin:24px auto 40px;
