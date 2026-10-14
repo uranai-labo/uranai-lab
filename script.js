@@ -1255,6 +1255,50 @@ function machineLinkHTML(machine, extraClass) {
   return `<a${cls} href="https://www.google.com/search?q=${query}" target="_blank" rel="noopener">${name}</a>`;
 }
 
+/* ---------------- アフィリエイト広告（A8.net／アピールサイト：パチンコ・スロット占い） ----------------
+   どの広告も「PR」表記つきの枠でのみ表示する。クリックはGA4の affiliate_click イベントで計測。 */
+const ADS = {
+  hunter: {
+    id: "premium_hunter",
+    href: "https://px.a8.net/svt/ejp?a8mat=4BCNG7+BZ1VIY+3ATI+5YJRM",
+    pixel: "https://www14.a8.net/0.gif?a8mat=4BCNG7+BZ1VIY+3ATI+5YJRM",
+    label: "スマホ対応★オンラインスロット",
+    note: "※19歳以上の方向け。無料ポイントで遊べる景品交換型のゲームです。",
+  },
+  keiba: {
+    id: "keiba_saikyo",
+    href: "https://px.a8.net/svt/ejp?a8mat=4BCNG7+BW2PI2+47AY+61Z82",
+    pixel: "https://www18.a8.net/0.gif?a8mat=4BCNG7+BW2PI2+47AY+61Z82",
+    label: "競馬予想なら！競馬最強の法則WEB",
+    note: "※馬券の購入は20歳以上です。",
+  },
+  hapitas: {
+    id: "hapitas",
+    href: "https://px.a8.net/svt/ejp?a8mat=4BC4QN+7WL8PM+1LP8+BWVTE",
+    pixel: "https://www14.a8.net/0.gif?a8mat=4BC4QN+7WL8PM+1LP8+BWVTE",
+    label: "ハピタス",
+    note: "※無料で登録できるポイントサイトです。",
+  },
+};
+
+function adItemHTML(key, lead, placement) {
+  const ad = ADS[key];
+  return `<p class="ad-item">${lead}<a href="${ad.href}" target="_blank" rel="nofollow sponsored noopener" data-ad="${ad.id}" data-placement="${placement}">${ad.label}</a></p><p class="ad-note">${ad.note}</p><img class="ad-pixel" border="0" width="1" height="1" src="${ad.pixel}" alt="">`;
+}
+
+function adBlockHTML(items, placement) {
+  return `<p class="ad-slot-label">PR</p>` + items.map(([key, lead]) => adItemHTML(key, lead, placement)).join("");
+}
+
+function track(name, params) {
+  if (typeof gtag === "function") gtag("event", name, params);
+}
+
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest("a[data-ad]");
+  if (a) track("affiliate_click", { ad_id: a.dataset.ad, placement: a.dataset.placement });
+});
+
 function showResult() {
   document.getElementById("spec-breakdown-block").hidden = false;
   document.getElementById("ad-slot").hidden = false;
@@ -1299,6 +1343,16 @@ function showResult() {
   document.getElementById("result-desc").textContent = machineDesc(mainMachine, category, mainSpec);
   document.getElementById("result-advice").textContent = advice;
   document.getElementById("result-lucky").textContent = lucky;
+
+  document.getElementById("ad-slot").innerHTML = adBlockHTML(
+    [
+      ["hunter", `${isPachinko ? "パチンコ" : "スロット"}好きの今日の運試しに。`],
+      ["keiba", "競馬も気になるなら。"],
+      ["hapitas", "遊びに行く前のお小遣い稼ぎに、ポイントサイト"],
+    ],
+    "result"
+  );
+  track("diagnosis_complete", { category, spec: mainSpec });
 
   // スペック区分別：今日のおすすめ一覧（区分ごとに独立したシードで選出）
   const specListEl = document.getElementById("spec-list");
@@ -1527,7 +1581,9 @@ document.getElementById("btn-draw-amida").addEventListener("click", () => {
           <p class="character-line">お前さんが引いた線じゃ。これも天の采配、今日はこれで腹を括ってみるのも一興じゃぞ。</p>
         </div>
       </div>
+      <div class="ad-slot">${adBlockHTML([["hunter", "引いた線の続きは、こちらで運試し。"], ["hapitas", "軍資金づくりに、ポイントサイト"]], "amida")}</div>
     `;
+    track("amida_result", { category });
     btn.disabled = false;
     btn.textContent = "もう一度占う（線を引き直す）";
     amidaDrawn = true;
@@ -1634,6 +1690,20 @@ document.getElementById("gamble-form").addEventListener("submit", (e) => {
   }
 
   html += `<p class="note">※この診断は占い・エンタメ目的であり、特定の賭け事の実施や結果を推奨・保証するものではありません。公営競技・宝くじ等は20歳未満は購入できません。オンラインカジノ等の違法な賭博への参加は法律で禁止されています。</p>`;
+
+  // 違法・グレーなネタ枠の結果の隣には広告を出さない
+  if (!pick.joke) {
+    let adItems;
+    if (pick.name.includes("競馬")) {
+      adItems = [["keiba", "競馬で勝負するなら、予想の参考にもどうぞ。"], ["hapitas", "軍資金づくりに、ポイントサイト"]];
+    } else if (pick.name === "パチンコ・スロット") {
+      adItems = [["hunter", "ホールに行けない日はこちらで運試し。"], ["hapitas", "軍資金づくりに、ポイントサイト"]];
+    } else {
+      adItems = [["hunter", "運試しついでに。"], ["keiba", "競馬も気になるなら。"], ["hapitas", "軍資金づくりに、ポイントサイト"]];
+    }
+    html += `<div class="ad-slot">${adBlockHTML(adItems, "gamble")}</div>`;
+  }
+  track("gamble_fortune", { pick: pick.name, joke: !!pick.joke });
 
   document.getElementById("gamble-result").innerHTML = html;
 });

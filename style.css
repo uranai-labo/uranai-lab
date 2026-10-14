@@ -360,6 +360,25 @@ h2{
   color:var(--text-muted);
   position:relative;
 }
+.ad-item{
+  margin:0 0 2px;
+  color:var(--text);
+  line-height:1.7;
+}
+.ad-item a{
+  color:var(--accent-3);
+  font-weight:700;
+}
+.ad-note{
+  margin:0 0 12px;
+  font-size:.68rem;
+  color:#9a8fb3;
+}
+.ad-pixel{
+  display:block;
+  width:1px;
+  height:1px;
+}
 .ad-slot-label{
   position:absolute;
   top:-9px;
