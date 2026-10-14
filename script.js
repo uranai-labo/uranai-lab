@@ -1255,6 +1255,41 @@ function machineLinkHTML(machine, extraClass) {
   return `<a${cls} href="https://www.google.com/search?q=${query}" target="_blank" rel="noopener">${name}</a>`;
 }
 
+/* ---------------- 機種ごとの口コミ（DMMぱちタウンの評価・口コミ傾向。データは reviews.js） ---------------- */
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function reviewFor(machine) {
+  if (typeof MACHINE_REVIEWS === "undefined") return null;
+  return MACHINE_REVIEWS[machineName(machine)] || null;
+}
+
+function reviewBoxHTML(machine) {
+  const r = reviewFor(machine);
+  if (!r) return "";
+  const url = `https://p-town.dmm.com/machines/${r.id}/review`;
+  const link = `<a href="${url}" target="_blank" rel="noopener nofollow">口コミを見る（DMMぱちタウン）</a>`;
+  if (!r.count || r.score == null) {
+    return `<div class="review-box"><p class="review-head">📣 ユーザー口コミ</p><p class="review-line">まだ口コミが投稿されていません。</p><p class="review-src">${link}</p></div>`;
+  }
+  if (r.count < 3) {
+    return `<div class="review-box"><p class="review-head">📣 ユーザー口コミ</p><p class="review-line">口コミが${r.count}件と少ないため、評価点は表示していません。</p><p class="review-src">${link}</p></div>`;
+  }
+  const few = r.count < 5;
+  let html =`<div class="review-box"><p class="review-head">📣 ユーザー口コミ<span class="review-score">★${r.score.toFixed(2)}</span><span class="review-count">（${r.count}件${few ? "・少数のため参考程度" : ""}）</span></p>`;
+  if (!few && r.good) html += `<p class="review-line"><b>👍 評価されている点</b>${escapeHTML(r.good)}</p>`;
+  if (!few && r.bad) html += `<p class="review-line"><b>👎 不満が多い点</b>${escapeHTML(r.bad)}</p>`;
+  html += `<p class="review-src">DMMぱちタウンの口コミを要約した参考情報（${REVIEWS_AS_OF}時点）｜${link}</p></div>`;
+  return html;
+}
+
+function reviewMiniHTML(machine) {
+  const r = reviewFor(machine);
+  if (!r || !r.count || r.score == null || r.count < 5) return "";
+  return `<span class="spec-score">★${r.score.toFixed(2)}（${r.count}件）</span>`;
+}
+
 /* ---------------- アフィリエイト広告（A8.net／アピールサイト：パチンコ・スロット占い） ----------------
    どの広告も「PR」表記つきの枠でのみ表示する。クリックはGA4の affiliate_click イベントで計測。 */
 const ADS = {
@@ -1341,6 +1376,7 @@ function showResult() {
   document.getElementById("result-catchphrase").textContent = `二つ名：${catchphrase}`;
   document.getElementById("result-genre").innerHTML = machineLinkHTML(mainMachine);
   document.getElementById("result-desc").textContent = machineDesc(mainMachine, category, mainSpec);
+  document.getElementById("result-review").innerHTML = reviewBoxHTML(mainMachine);
   document.getElementById("result-advice").textContent = advice;
   document.getElementById("result-lucky").textContent = lucky;
 
@@ -1362,7 +1398,7 @@ function showResult() {
     const machine = pickFromPool(pool, `${seedStr}-${specKey}`);
     const li = document.createElement("li");
     li.className = "spec-item" + (specKey === mainSpec ? " spec-item-main" : "");
-    li.innerHTML = `<span class="spec-name">${SPEC_LABELS[category][specKey]}</span><span class="spec-machine">${machineLinkHTML(machine, "spec-machine-link")}</span>`;
+    li.innerHTML = `<span class="spec-name">${SPEC_LABELS[category][specKey]}</span><span class="spec-machine">${machineLinkHTML(machine, "spec-machine-link")}${reviewMiniHTML(machine)}</span>`;
     specListEl.appendChild(li);
   });
 
@@ -1573,6 +1609,7 @@ document.getElementById("btn-draw-amida").addEventListener("click", () => {
         <h3>あみだくじの結果</h3>
         <p><strong>${SPEC_LABELS[category][specKey]}</strong>／${machineLinkHTML(machine)}</p>
         <p>${machineDesc(machine, category, specKey)}</p>
+        ${reviewBoxHTML(machine)}
       </div>
       <div class="character-intro character-intro-result">
         <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
@@ -1800,6 +1837,7 @@ function renderSharedResultFromURL() {
   document.getElementById("result-catchphrase").textContent = `二つ名：${catchphrase}`;
   document.getElementById("result-genre").innerHTML = machineLinkHTML(machine);
   document.getElementById("result-desc").textContent = machineDesc(machine, category, mainSpec);
+  document.getElementById("result-review").innerHTML = reviewBoxHTML(machine);
   document.getElementById("result-advice").textContent = advice;
   document.getElementById("result-lucky").textContent = lucky;
 

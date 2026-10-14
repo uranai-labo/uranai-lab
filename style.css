@@ -360,6 +360,27 @@ h2{
   color:var(--text-muted);
   position:relative;
 }
+/* 機種ごとの口コミ */
+.review-box{
+  margin-top:12px;
+  text-align:left;
+  background:#fffaf0;
+  border:1px solid #f3e3c0;
+  border-radius:12px;
+  padding:12px 14px;
+  font-size:.8rem;
+  line-height:1.7;
+  color:var(--text);
+}
+.review-head{ margin:0 0 4px; font-weight:700; }
+.review-score{ color:#d98200; font-weight:700; margin-left:6px; }
+.review-count{ color:var(--text-muted); font-size:.72rem; margin-left:2px; }
+.review-line{ margin:4px 0; }
+.review-line b{ display:block; font-size:.72rem; color:var(--text-muted); }
+.review-src{ margin:6px 0 0; font-size:.68rem; color:var(--text-muted); }
+.review-src a{ color:var(--accent-3); }
+.spec-score{ color:#d98200; font-size:.72rem; margin-left:6px; white-space:nowrap; }
+
 .ad-item{
   margin:0 0 2px;
   color:var(--text);
