@@ -1299,6 +1299,14 @@ const ADS = {
     pixel: "https://www14.a8.net/0.gif?a8mat=4BCNG7+BZ1VIY+3ATI+5YJRM",
     label: "スマホ対応★オンラインスロット",
     note: "※19歳以上の方向け。無料ポイントで遊べる景品交換型のゲームです。",
+    // バナー素材015（336×280）
+    banner: {
+      href: "https://px.a8.net/svt/ejp?a8mat=4BCNG7+BZ1VIY+3ATI+61JSH",
+      pixel: "https://www12.a8.net/0.gif?a8mat=4BCNG7+BZ1VIY+3ATI+61JSH",
+      src: "https://www20.a8.net/svt/bgt?aid=260930743724&wid=002&eno=01&mid=s00000015399001015000&mc=1",
+      w: 336,
+      h: 280,
+    },
   },
   keiba: {
     id: "keiba_saikyo",
@@ -1321,6 +1329,14 @@ const ADS = {
     pixel: "https://www14.a8.net/0.gif?a8mat=4BC4QN+7WL8PM+1LP8+BWVTE",
     label: "ハピタス",
     note: "※無料で登録できるポイントサイトです。",
+    // バナー素材058（250×250）
+    banner: {
+      href: "https://px.a8.net/svt/ejp?a8mat=4BC4QN+7WL8PM+1LP8+C93MP",
+      pixel: "https://www16.a8.net/0.gif?a8mat=4BC4QN+7WL8PM+1LP8+C93MP",
+      src: "https://www22.a8.net/svt/bgt?aid=260906495478&wid=002&eno=01&mid=s00000007478002058000&mc=1",
+      w: 250,
+      h: 250,
+    },
   },
 };
 
@@ -1397,7 +1413,7 @@ function showResult() {
     [
       ["hunter", `${isPachinko ? "パチンコ" : "スロット"}好きの今日の運試しに。`],
       ["keiba", "競馬も気になるなら。"],
-      ["hapitas", "遊びに行く前のお小遣い稼ぎに、ポイントサイト"],
+      ["hapitas", "遊びに行く前のお小遣い稼ぎに。"],
     ],
     "result"
   );
@@ -1632,7 +1648,7 @@ document.getElementById("btn-draw-amida").addEventListener("click", () => {
           <p class="character-line">お前さんが引いた線じゃ。これも天の采配、今日はこれで腹を括ってみるのも一興じゃぞ。</p>
         </div>
       </div>
-      <div class="ad-slot">${adBlockHTML([["hunter", "引いた線の続きは、こちらで運試し。"], ["hapitas", "軍資金づくりに、ポイントサイト"]], "amida")}</div>
+      <div class="ad-slot">${adBlockHTML([["hunter", "引いた線の続きは、こちらで運試し。"], ["hapitas", "軍資金づくりに。"]], "amida")}</div>
     `;
     renderVoteBox(document.getElementById("amida-vote"), machine);
     track("amida_result", { category });
@@ -1747,11 +1763,11 @@ document.getElementById("gamble-form").addEventListener("submit", (e) => {
   if (!pick.joke) {
     let adItems;
     if (pick.name.includes("競馬")) {
-      adItems = [["keiba", "競馬で勝負するなら、予想の参考にもどうぞ。"], ["hapitas", "軍資金づくりに、ポイントサイト"]];
+      adItems = [["keiba", "競馬で勝負するなら、予想の参考にもどうぞ。"], ["hapitas", "軍資金づくりに。"]];
     } else if (pick.name === "パチンコ・スロット") {
-      adItems = [["hunter", "ホールに行けない日はこちらで運試し。"], ["hapitas", "軍資金づくりに、ポイントサイト"]];
+      adItems = [["hunter", "ホールに行けない日はこちらで運試し。"], ["hapitas", "軍資金づくりに。"]];
     } else {
-      adItems = [["hunter", "運試しついでに。"], ["keiba", "競馬も気になるなら。"], ["hapitas", "軍資金づくりに、ポイントサイト"]];
+      adItems = [["hunter", "運試しついでに。"], ["keiba", "競馬も気になるなら。"], ["hapitas", "軍資金づくりに。"]];
     }
     html += `<div class="ad-slot">${adBlockHTML(adItems, "gamble")}</div>`;
   }
