@@ -1306,6 +1306,14 @@ const ADS = {
     pixel: "https://www18.a8.net/0.gif?a8mat=4BCNG7+BW2PI2+47AY+61Z82",
     label: "競馬予想なら！競馬最強の法則WEB",
     note: "※馬券の購入は20歳以上です。",
+    // バナー素材061（350×263）。バナーがある広告はテキストの代わりにバナーを表示する
+    banner: {
+      href: "https://px.a8.net/svt/ejp?a8mat=4BCNG7+BW2PI2+47AY+6BEQ9",
+      pixel: "https://www17.a8.net/0.gif?a8mat=4BCNG7+BW2PI2+47AY+6BEQ9",
+      src: "https://www20.a8.net/svt/bgt?aid=260930743719&wid=002&eno=01&mid=s00000019609001061000&mc=1",
+      w: 350,
+      h: 263,
+    },
   },
   hapitas: {
     id: "hapitas",
@@ -1318,6 +1326,10 @@ const ADS = {
 
 function adItemHTML(key, lead, placement) {
   const ad = ADS[key];
+  if (ad.banner) {
+    const b = ad.banner;
+    return `<p class="ad-item">${lead}</p><a class="ad-banner-link" href="${b.href}" target="_blank" rel="nofollow sponsored noopener" data-ad="${ad.id}" data-placement="${placement}"><img class="ad-banner" src="${b.src}" width="${b.w}" height="${b.h}" alt="${ad.label}"></a><p class="ad-note">${ad.note}</p><img class="ad-pixel" border="0" width="1" height="1" src="${b.pixel}" alt="">`;
+  }
   return `<p class="ad-item">${lead}<a href="${ad.href}" target="_blank" rel="nofollow sponsored noopener" data-ad="${ad.id}" data-placement="${placement}">${ad.label}</a></p><p class="ad-note">${ad.note}</p><img class="ad-pixel" border="0" width="1" height="1" src="${ad.pixel}" alt="">`;
 }
 

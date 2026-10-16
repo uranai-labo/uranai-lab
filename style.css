@@ -438,6 +438,17 @@ h2{
   font-size:.68rem;
   color:#9a8fb3;
 }
+.ad-banner-link{
+  display:block;
+  text-align:center;
+  margin:6px 0 2px;
+}
+.ad-banner{
+  max-width:100%;
+  height:auto;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);
+}
 .ad-pixel{
   display:block;
   width:1px;
