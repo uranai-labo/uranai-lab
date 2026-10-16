@@ -687,3 +687,135 @@ h2{
   margin-top:8px;
   color:#8873ad;
 }
+
+/* ---------------- サイトメニュー（三本線） ---------------- */
+.menu-btn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:5;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  min-width:56px;
+  padding:8px 10px 6px;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:12px;
+  background:rgba(255,255,255,.1);
+  color:#fff;
+  cursor:pointer;
+  font-family:inherit;
+}
+.menu-btn:hover, .menu-btn:focus-visible{ background:rgba(255,255,255,.2); outline:2px solid var(--accent-2); outline-offset:2px; }
+.menu-bars{ display:flex; flex-direction:column; gap:4px; width:22px; }
+.menu-bars i{ display:block; height:2.5px; border-radius:2px; background:#fff; }
+.menu-btn-text{ font-size:.6rem; letter-spacing:.04em; }
+body.menu-open{ overflow:hidden; }
+.menu-overlay{
+  position:fixed; inset:0; z-index:90;
+  background:rgba(10,4,20,.6);
+  opacity:0; transition:opacity .2s ease;
+}
+.menu-overlay.open{ opacity:1; }
+.site-menu{
+  position:fixed; top:0; right:0; bottom:0; z-index:100;
+  width:min(320px, 88vw);
+  background:#fff;
+  color:var(--text);
+  box-shadow:-10px 0 30px rgba(0,0,0,.4);
+  padding:12px 14px 28px;
+  overflow-y:auto;
+  transform:translateX(100%);
+  transition:transform .22s ease;
+}
+.site-menu.open{ transform:translateX(0); }
+.site-menu-head{
+  display:flex; align-items:center; justify-content:space-between;
+  font-weight:700; font-size:1.05rem; padding:6px 4px 10px;
+  border-bottom:2px solid #efe6ff;
+}
+.menu-close{
+  border:none; background:#f1ecff; color:var(--accent-3);
+  width:36px; height:36px; border-radius:50%; font-size:1rem; cursor:pointer;
+}
+.menu-group{
+  margin:16px 4px 6px; font-size:.72rem; font-weight:700; color:var(--accent-3); letter-spacing:.04em;
+}
+.menu-item{
+  display:block; width:100%; text-align:left;
+  background:#faf8ff; border:1px solid #efe6ff; border-radius:12px;
+  padding:12px 14px; margin-bottom:8px;
+  font-family:inherit; font-size:.92rem; font-weight:700; color:var(--text);
+  text-decoration:none; cursor:pointer;
+}
+.menu-item small{ display:block; margin-top:2px; font-size:.68rem; font-weight:400; color:var(--text-muted); }
+.menu-item:hover, .menu-item:focus-visible{ border-color:var(--accent-3); background:#f4eeff; outline:none; }
+@media (prefers-reduced-motion: reduce){
+  .site-menu, .menu-overlay{ transition:none; }
+}
+.site-header{ padding-top:64px; }
+.site-header::after{ top:76px; }
+@media (max-width: 380px){
+  .logo{ font-size:1.45rem; }
+}
+
+/* ---------------- ボーダー計算機 ---------------- */
+.calc-form{ display:flex; flex-direction:column; gap:14px; margin-top:6px; }
+.calc-form label{ display:flex; flex-direction:column; gap:6px; font-size:.85rem; color:var(--text-muted); }
+.calc-form[hidden], .calc-form label[hidden]{ display:none; }
+.calc-form input, .calc-form select{
+  font-size:1rem; padding:11px 12px; border-radius:10px; border:2px solid #efe6ff;
+  color:var(--text); font-family:inherit; background:#fff; width:100%;
+}
+.calc-form input:focus, .calc-form select:focus{ outline:none; border-color:var(--accent-3); }
+.calc-border{ margin:0; padding:10px 12px; border-radius:10px; background:#faf5ff; font-size:.88rem; line-height:1.7; min-height:2.6em; }
+.calc-border b{ font-size:1.15rem; color:var(--accent-3); }
+.calc-border small{ color:var(--text-muted); font-size:.7rem; }
+.calc-result{ margin-top:16px; }
+.calc-verdict{ text-align:center; font-weight:700; padding:12px; border-radius:12px; margin-bottom:10px; font-size:.98rem; }
+.calc-verdict.plus{ background:#e8f8ee; color:#17794a; }
+.calc-verdict.minus{ background:#ffecef; color:#c0213f; }
+.calc-verdict.even{ background:#f1ecff; color:var(--accent-3); }
+.calc-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:10px 4px; border-bottom:1px solid #f0e9fb; font-size:.88rem; }
+.calc-row b{ font-size:1.05rem; text-align:right; }
+.calc-row b.plus{ color:#17794a; }
+.calc-row b.minus{ color:#c0213f; }
+.calc-foot{ margin:10px 0 0; font-size:.72rem; line-height:1.7; color:var(--text-muted); }
+.calc-error{ margin:0; padding:10px 12px; border-radius:10px; background:#fff4e5; color:#8a5200; font-size:.85rem; }
+.calc-notes{ margin-top:22px; padding-top:6px; border-top:2px solid #f0e9fb; }
+.calc-notes h2{ font-size:.95rem; margin:14px 0 8px; }
+.calc-notes ul{ margin:0; padding-left:1.2em; font-size:.78rem; line-height:1.8; color:var(--text-muted); }
+.calc-notes li{ margin-bottom:6px; }
+.calc-notes a{ color:var(--accent-3); }
+
+/* ---------------- ボーダーが甘い機種ランキング ---------------- */
+.rank-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 8px; }
+.rank-tab{
+  border:2px solid #efe6ff; background:#faf8ff; color:var(--text); border-radius:999px;
+  padding:7px 12px; font-size:.8rem; font-family:inherit; cursor:pointer;
+}
+.rank-tab small{ margin-left:4px; color:var(--text-muted); font-size:.66rem; }
+.rank-tab.active{ border-color:var(--accent); background:#fff0f6; font-weight:700; }
+.rank-opt{ display:flex; align-items:center; gap:6px; font-size:.78rem; color:var(--text-muted); margin:4px 0 12px; }
+.rank-list{ list-style:none; margin:0; padding:0; }
+.rank-item{ display:flex; align-items:center; gap:10px; padding:12px 4px; border-bottom:1px solid #f0e9fb; }
+.rank-no{
+  flex:none; width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:#f1ecff; color:var(--accent-3); font-weight:700; font-size:.88rem;
+}
+.rank-item:nth-child(1) .rank-no{ background:var(--accent-2); color:#fff; }
+.rank-main{ flex:1; min-width:0; }
+.rank-name{ margin:0; font-size:.88rem; font-weight:700; line-height:1.5; overflow-wrap:anywhere; }
+.rank-name small{ font-weight:400; color:var(--text-muted); margin-left:2px; }
+.rank-meta{ margin:2px 0 0; font-size:.7rem; color:var(--text-muted); }
+.rank-actions{ margin:4px 0 0; font-size:.72rem; display:flex; gap:12px; align-items:center; }
+.rank-actions a{ color:var(--text-muted); }
+.rank-actions .link-btn{ padding:0; font-size:.72rem; }
+.rank-val{ flex:none; text-align:right; }
+.rank-val b{ font-size:1.3rem; color:var(--accent); }
+.rank-val small{ display:block; font-size:.62rem; color:var(--text-muted); }
+.rank-more{ text-align:center; margin:12px 0 0; }
+.rank-empty{ padding:14px 4px; color:var(--text-muted); font-size:.85rem; }
+.rank-nodata{ margin:8px 0 0; font-size:.72rem; line-height:1.7; color:var(--text-muted); }

@@ -1150,6 +1150,8 @@ const screens = {
   result: document.getElementById("screen-result"),
   amida: document.getElementById("screen-amida"),
   gamble: document.getElementById("screen-gamble"),
+  calc: document.getElementById("screen-calc"),
+  rank: document.getElementById("screen-rank"),
 };
 
 function showScreen(name) {
