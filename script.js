@@ -1152,6 +1152,8 @@ const screens = {
   gamble: document.getElementById("screen-gamble"),
   calc: document.getElementById("screen-calc"),
   rank: document.getElementById("screen-rank"),
+  catalog: document.getElementById("screen-catalog"),
+  ledger: document.getElementById("screen-ledger"),
 };
 
 function showScreen(name) {
@@ -1420,6 +1422,10 @@ function showResult() {
     "result"
   );
   track("diagnosis_complete", { category, spec: mainSpec });
+  // 収支ノートの「占い履歴」に端末内だけで残す（ledger.js）
+  if (typeof recordFortune === "function") {
+    recordFortune({ kind: "diagnosis", rank, catchphrase, machine: machineName(mainMachine), spec: SPEC_LABELS[category][mainSpec], category });
+  }
 
   // スペック区分別：今日のおすすめ一覧（区分ごとに独立したシードで選出）
   const specListEl = document.getElementById("spec-list");
@@ -1654,6 +1660,9 @@ document.getElementById("btn-draw-amida").addEventListener("click", () => {
     `;
     renderVoteBox(document.getElementById("amida-vote"), machine);
     track("amida_result", { category });
+    if (typeof recordFortune === "function") {
+      recordFortune({ kind: "amida", machine: machineName(machine), spec: SPEC_LABELS[category][specKey], category });
+    }
     btn.disabled = false;
     btn.textContent = "もう一度占う（線を引き直す）";
     amidaDrawn = true;
@@ -1774,6 +1783,8 @@ document.getElementById("gamble-form").addEventListener("submit", (e) => {
     html += `<div class="ad-slot">${adBlockHTML(adItems, "gamble")}</div>`;
   }
   track("gamble_fortune", { pick: pick.name, joke: !!pick.joke });
+  // 違法・グレーなネタ枠は履歴に残さない
+  if (!pick.joke && typeof recordFortune === "function") recordFortune({ kind: "gamble", pick: pick.name });
 
   document.getElementById("gamble-result").innerHTML = html;
 });

@@ -846,3 +846,67 @@ body.menu-open{ overflow:hidden; }
 .calc-picked b{ flex:1; min-width:0; font-size:.95rem; line-height:1.5; overflow-wrap:anywhere; }
 .calc-manual-toggle{ margin:0; }
 .calc-manual-toggle .link-btn{ padding:0; }
+
+/* ---------------- 機種カタログ ---------------- */
+.cat-count{ margin:10px 0 6px; font-size:.78rem; color:var(--text-muted); }
+.cat-list{ list-style:none; margin:0; padding:0; }
+.cat-item{
+  display:block; width:100%; text-align:left; cursor:pointer; font-family:inherit; color:var(--text);
+  background:#faf8ff; border:1px solid #efe6ff; border-radius:12px; padding:12px 14px; margin-bottom:8px;
+}
+.cat-item:hover, .cat-item:focus-visible{ border-color:var(--accent-3); background:#f4eeff; outline:none; }
+.cat-item-name{ display:block; font-size:.9rem; font-weight:700; line-height:1.5; overflow-wrap:anywhere; }
+.cat-item-meta{ display:block; margin-top:2px; font-size:.7rem; color:var(--text-muted); }
+.cat-item-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.cat-item-chips:empty{ display:none; }
+.cat-chip{
+  display:inline-block; padding:2px 9px; border-radius:999px; background:#f1ecff; color:var(--accent-3);
+  font-size:.68rem; font-weight:700; line-height:1.6;
+}
+.cat-title{ margin:0 0 8px; font-size:1.2rem; line-height:1.5; overflow-wrap:anywhere; }
+.cat-tags{ margin:0 0 12px; display:flex; flex-wrap:wrap; gap:6px; }
+.cat-desc{ margin:0 0 6px; font-size:.88rem; line-height:1.8; }
+.cat-block{ margin-top:18px; }
+.cat-block h2{ font-size:.95rem; margin:0 0 8px; }
+.cat-sub{ margin:12px 0 6px; font-size:.85rem; }
+.cat-table{ width:100%; border-collapse:collapse; font-size:.85rem; }
+.cat-table th, .cat-table td{ padding:8px 6px; border-bottom:1px solid #f0e9fb; text-align:left; font-weight:400; }
+.cat-table tbody th{ color:var(--text-muted); }
+.cat-table td{ font-weight:700; }
+.cat-table thead th, .cat-table thead td{ font-size:.72rem; color:var(--text-muted); font-weight:400; }
+.cat-actions{ margin-top:18px; }
+.cat-links a{ color:var(--accent-3); }
+.cat-calc{ margin-top:6px; padding:12px 16px; font-size:.85rem; }
+
+/* ---------------- 収支ノート ---------------- */
+.ledger-notice{ padding:12px 14px; border-radius:12px; background:#faf5ff; border:1px solid #ece2ff; font-size:.78rem; line-height:1.7; }
+.ledger-notice ul{ margin:6px 0 0; padding-left:1.2em; color:var(--text-muted); }
+.ledger-notice li{ margin-bottom:4px; }
+.ledger-warn{ margin:8px 0 0; padding:8px 10px; border-radius:8px; background:#fff4e5; color:#8a5200; font-weight:700; }
+.ledger-warn[hidden], .ledger-fortune-hint[hidden], .calc-error[hidden]{ display:none; }
+.ledger-summary{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; }
+.lg-card{ padding:12px; border-radius:12px; background:#faf8ff; border:1px solid #efe6ff; text-align:center; }
+.lg-card small{ display:block; font-size:.68rem; color:var(--text-muted); }
+.lg-card b{ display:block; margin-top:2px; font-size:1.1rem; }
+.plus{ color:#17794a; } .minus{ color:#c0213f; } .even{ color:var(--text-muted); }
+.ledger-fortune-hint{ margin:0; padding:10px 12px; border-radius:10px; background:#fff8e1; font-size:.76rem; line-height:1.7; }
+.ledger-fortune-hint span, .lg-fortune span, .lg-fday span{ display:block; }
+.ledger-diff{ margin:0; font-size:.9rem; min-height:1.4em; }
+.lg-month{ margin:18px 0 6px; font-size:.95rem; display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+.lg-month small{ font-size:.75rem; color:var(--text-muted); font-weight:400; }
+.lg-entry{ padding:12px; margin-bottom:8px; border-radius:12px; background:#faf8ff; border:1px solid #efe6ff; }
+.lg-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.lg-date{ font-size:.8rem; color:var(--text-muted); }
+.lg-bal{ font-size:1.05rem; font-weight:700; }
+.lg-machine{ margin-top:4px; font-size:.88rem; font-weight:700; line-height:1.6; overflow-wrap:anywhere; }
+.lg-meta{ margin-top:2px; font-size:.74rem; color:var(--text-muted); }
+.lg-fortune{ margin-top:6px; padding:6px 8px; border-radius:8px; background:#fff8e1; font-size:.72rem; line-height:1.6; }
+.lg-more{ color:var(--text-muted); }
+.lg-memo{ margin-top:6px; font-size:.78rem; line-height:1.6; overflow-wrap:anywhere; }
+.lg-actions{ margin-top:6px; display:flex; gap:14px; }
+.lg-actions .link-btn{ padding:0; font-size:.75rem; }
+.lg-fday{ padding:10px 4px; border-bottom:1px solid #f0e9fb; font-size:.78rem; line-height:1.7; }
+.lg-fday b{ display:block; font-size:.78rem; margin-bottom:2px; }
+.ledger-tools{ display:flex; flex-direction:column; gap:4px; }
+.ledger-tools .btn-secondary{ padding:12px 16px; font-size:.88rem; margin-top:4px; }
+.ledger-danger{ background:#ffecef; color:#c0213f; }

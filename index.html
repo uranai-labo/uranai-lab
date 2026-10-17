@@ -101,6 +101,9 @@
   <button type="button" class="menu-item" data-nav="intro">🎰 今日の一台を占う<small>トップ画面</small></button>
   <button type="button" class="menu-item" data-nav="amida">🪢 あみだくじで占う<small>線は自分で引く</small></button>
   <button type="button" class="menu-item" data-nav="gamble">🔥 今日が勝負の方はこちら<small>生年月日と名前で占う</small></button>
+  <p class="menu-group">機種を調べる・記録する</p>
+  <button type="button" class="menu-item" data-nav="catalog">📚 機種カタログ<small>ボーダー・口コミ・投票を機種ごとに</small></button>
+  <button type="button" class="menu-item" data-nav="ledger">📒 収支ノート<small>登録不要・占い結果も自動で記録</small></button>
   <p class="menu-group">ボーダー（パチンコ）</p>
   <button type="button" class="menu-item" data-nav="calc">🧮 ボーダー計算機<small>回転数から差と期待値を計算</small></button>
   <button type="button" class="menu-item" data-nav="rank">📊 ボーダーが甘い機種ランキング<small>低い順・DMMぱちタウンの値</small></button>
@@ -132,6 +135,10 @@
       <div class="alt-links">
         <button class="link-btn" data-nav="calc">🧮 ボーダー計算機</button>
         <button class="link-btn" data-nav="rank">📊 ボーダーが甘い機種ランキング</button>
+      </div>
+      <div class="alt-links">
+        <button class="link-btn" data-nav="catalog">📚 機種カタログ</button>
+        <button class="link-btn" data-nav="ledger">📒 収支ノート</button>
       </div>
     </div>
   </section>
@@ -363,6 +370,102 @@
     </div>
   </section>
 
+  <!-- 機種カタログ -->
+  <section id="screen-catalog" class="screen">
+    <div class="card">
+      <button class="step-back" data-nav="intro">← トップに戻る</button>
+      <div id="cat-list-view">
+        <h1>📚 機種カタログ</h1>
+        <p class="lead">当サイトに登場する機種を、名前・ひらがな・頭文字で探せます。ボーダー（パチンコ）、口コミ評価、みんなの投票を機種ごとにまとめて見られます。</p>
+        <div class="rank-tabs" id="cat-tabs" role="tablist" aria-label="種別"></div>
+        <div class="calc-field">
+          <label for="cat-search">機種を検索（名前の一部・ひらがな・頭文字）</label>
+          <input type="search" id="cat-search" placeholder="例：まどか　ばけもの　はくせん" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <p class="cat-count" id="cat-count" aria-live="polite"></p>
+        <ul class="cat-list" id="cat-list"></ul>
+        <p class="rank-more" id="cat-more-wrap"><button type="button" class="btn-secondary" id="cat-more">もっと見る</button></p>
+        <p class="calc-foot">口コミ・ボーダーの出典はDMMぱちタウンです（口コミは<span class="reviews-asof"></span>時点、ボーダーは<span class="border-asof"></span>取得）。掲載値は目安で、出玉や勝ちを保証するものではありません。20歳未満の方は遊技できません。</p>
+      </div>
+      <div id="cat-detail-view" hidden></div>
+    </div>
+  </section>
+
+  <!-- 収支ノート -->
+  <section id="screen-ledger" class="screen">
+    <div class="card">
+      <button class="step-back" data-nav="intro">← トップに戻る</button>
+      <h1>📒 収支ノート</h1>
+      <p class="lead">打った日の収支をメモしておく、無料のノートです。登録・ログインは要りません。その日の占い結果も自動で一緒に残ります。</p>
+      <div class="ledger-notice">
+        <b>🔒 データはこのブラウザの中だけに保存されます。</b>
+        <ul>
+          <li>サーバーには送信しません。当サイト運営者にも見えません。</li>
+          <li>日付が変わっても消えません。ただし<b>ブラウザの閲覧データ削除・プライベートモード・機種変更・別の端末</b>では引き継がれません。iPhoneのSafariは、長期間サイトを開かないと自動で消えることがあります。</li>
+          <li>大事な記録は、下の「データの管理」から<b>ときどき書き出して</b>保管してください。</li>
+        </ul>
+        <p class="ledger-warn" id="ledger-warn" hidden>⚠ このブラウザでは保存ができない設定になっています（プライベートモード等）。記録は閉じると消えます。</p>
+      </div>
+
+      <div class="ledger-summary" id="ledger-summary"></div>
+
+      <h2 id="ledger-form-title">記録を追加</h2>
+      <form id="ledger-form" class="calc-form" autocomplete="off" novalidate>
+        <label>日付
+          <input type="date" id="lg-date" required>
+        </label>
+        <p class="ledger-fortune-hint" id="lg-fortune-hint" hidden></p>
+        <label>種別
+          <select id="lg-type">
+            <option value="pachinko">パチンコ</option>
+            <option value="slot">スロット</option>
+          </select>
+        </label>
+        <div class="calc-field" id="lg-machine-row">
+          <label for="lg-machine">機種（検索して選ぶか、そのまま入力）</label>
+          <input type="text" id="lg-machine" role="combobox" aria-expanded="false" aria-controls="lg-suggest" aria-autocomplete="list" maxlength="60" placeholder="例：まどか" autocomplete="off" spellcheck="false">
+          <ul class="calc-suggest" id="lg-suggest" role="listbox" hidden></ul>
+        </div>
+        <label>投資（円）
+          <input type="number" id="lg-invest" inputmode="numeric" min="0" max="9999999" step="100" placeholder="例：20000">
+        </label>
+        <label>回収（円・換金した額）
+          <input type="number" id="lg-recover" inputmode="numeric" min="0" max="9999999" step="100" placeholder="例：35000（出なければ0）">
+        </label>
+        <label id="lg-rate-row">実際の回転数（1,000円あたり・任意）
+          <input type="number" id="lg-rate" inputmode="decimal" min="1" max="60" step="0.1" placeholder="例：18.5">
+        </label>
+        <label>メモ（任意）
+          <input type="text" id="lg-memo" maxlength="200" placeholder="例：角台、夕方から">
+        </label>
+        <p class="ledger-diff" id="lg-diff" aria-live="polite"></p>
+        <p class="calc-error" id="lg-error" hidden></p>
+        <button type="submit" class="btn-primary" id="lg-submit">記録する</button>
+        <button type="button" class="btn-secondary" id="lg-cancel" hidden>編集をやめる</button>
+      </form>
+
+      <h2>記録一覧</h2>
+      <div id="ledger-list"></div>
+
+      <h2>占い履歴</h2>
+      <p class="calc-foot">占い（診断・あみだ・今日が勝負）を見るたびに、この端末に自動で残ります（1日最大8件）。</p>
+      <div id="ledger-fortunes"></div>
+
+      <div id="ledger-insight"></div>
+
+      <h2>データの管理</h2>
+      <div class="ledger-tools">
+        <button type="button" class="btn-secondary" id="lg-export-json">バックアップを書き出す（JSON）</button>
+        <button type="button" class="btn-secondary" id="lg-export-csv">表計算用に書き出す（CSV）</button>
+        <button type="button" class="btn-secondary" id="lg-import">バックアップを読み込む</button>
+        <input type="file" id="lg-import-file" accept="application/json,.json" hidden>
+        <button type="button" class="btn-secondary ledger-danger" id="lg-clear">すべて削除する</button>
+        <p class="calc-foot" id="lg-tools-msg" aria-live="polite"></p>
+      </div>
+      <p class="calc-foot">収支ノートは自己管理のためのメモで、損益の保証や税務上の判断を目的としたものではありません。遊技は適度に、計画的に。20歳未満の方は遊技できません。</p>
+    </div>
+  </section>
+
 </main>
 
 <section class="about" id="about">
@@ -405,7 +508,10 @@
 <script src="votes-config.js"></script>
 <script src="votes.js"></script>
 <script src="borders.js"></script>
+<script src="catalog.js"></script>
 <script src="script.js"></script>
 <script src="border-tools.js"></script>
+<script src="catalog-ui.js"></script>
+<script src="ledger.js"></script>
 </body>
 </html>

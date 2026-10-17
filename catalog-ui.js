@@ -1,0 +1,202 @@
+/* 機種カタログ。MACHINES（機種名・区分）＋ catalog.js（DMM ID・読み仮名）＋ borders.js（ボーダー）＋ reviews.js（口コミ）を
+   機種ごとにまとめて見せる。数値はいずれも各データファイルの転記で、ここでは計算・推測しない。 */
+
+// 検索用の正規化：全角半角・大文字小文字・カタカナ/ひらがな・空白や記号の差を吸収する（ledger.jsでも使う）
+function normalizeSearch(s) {
+  return String(s).normalize("NFKC").toLowerCase()
+    .replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .replace(/[^\p{L}\p{N}ー]/gu, "");
+}
+
+(function () {
+  "use strict";
+
+  const TYPE_LABEL = { pachinko: "パチンコ", slot: "スロット" };
+  const PAGE = 20;
+
+  /* ---------------- 機種リストの組み立て ---------------- */
+  const list = [];
+  const byName = new Map();
+  ["pachinko", "slot"].forEach((type) => {
+    Object.keys(MACHINES[type]).forEach((spec) => {
+      MACHINES[type][spec].forEach((m) => {
+        const name = machineName(m);
+        const hit = byName.get(name);
+        if (hit) { if (!hit.specs.includes(spec)) hit.specs.push(spec); return; }
+        const meta = (typeof MACHINE_META !== "undefined" && MACHINE_META[name]) || {};
+        const it = {
+          name, type, specs: [spec], machine: m, id: meta.id || null,
+          nameN: normalizeSearch(name), kanaN: normalizeSearch(meta.kana || ""),
+          borders: BORDER_DATA.map((e, i) => ({ e, i })).filter((x) => x.e.name === name),
+        };
+        byName.set(name, it);
+        list.push(it);
+      });
+    });
+  });
+
+  // 機種名の頭の「e」「P」「PA」を付けて入力されても探せるようにする
+  function pos(hay, t) {
+    let p = hay.indexOf(t);
+    if (p < 0 && /^(pa|p|e)./.test(t)) p = hay.indexOf(t.replace(/^(pa|p|e)/, ""));
+    return p;
+  }
+  // 空白区切りはAND検索。名前・読みの先頭に近い一致を上位にする。type=""なら全種別
+  function searchCatalog(q, type) {
+    const tokens = String(q).normalize("NFKC").split(/\s+/).map(normalizeSearch).filter(Boolean);
+    const pool = type ? list.filter((x) => x.type === type) : list;
+    if (!tokens.length) return pool.slice();
+    const scored = [];
+    pool.forEach((x, idx) => {
+      let score = 0;
+      for (const t of tokens) {
+        const a = pos(x.nameN, t);
+        const b = pos(x.kanaN, t);
+        if (a < 0 && b < 0) return;
+        score += Math.min(a < 0 ? 99 : a, b < 0 ? 99 : b);
+      }
+      scored.push({ x, score, idx });
+    });
+    scored.sort((p, q2) => p.score - q2.score || p.idx - q2.idx);
+    return scored.map((s) => s.x);
+  }
+
+  document.querySelectorAll(".reviews-asof").forEach((el) => { el.textContent = typeof REVIEWS_AS_OF === "string" ? REVIEWS_AS_OF : ""; });
+
+  /* ---------------- 一覧 ---------------- */
+  const tabsEl = document.getElementById("cat-tabs");
+  const searchEl = document.getElementById("cat-search");
+  const countEl = document.getElementById("cat-count");
+  const listEl = document.getElementById("cat-list");
+  const moreWrap = document.getElementById("cat-more-wrap");
+  const moreBtn = document.getElementById("cat-more");
+  const listView = document.getElementById("cat-list-view");
+  const detailView = document.getElementById("cat-detail-view");
+  const st = { type: "", shown: PAGE };
+
+  function borderChip(it) {
+    const vals = it.borders.filter((x) => x.e.b[0] != null).map((x) => x.e.b[0]);
+    if (!vals.length) return "";
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    return `<span class="cat-chip">等価${lo === hi ? lo : `${lo}〜${hi}`}回転</span>`;
+  }
+
+  function renderTabs() {
+    const n = (t) => list.filter((x) => !t || x.type === t).length;
+    const tabs = [["", "すべて"], ["pachinko", "パチンコ"], ["slot", "スロット"]];
+    tabsEl.innerHTML = tabs.map(([k, label]) =>
+      `<button type="button" role="tab" class="rank-tab${k === st.type ? " active" : ""}" aria-selected="${k === st.type}" data-type="${k}">${label}<small>${n(k)}</small></button>`).join("");
+  }
+
+  function renderList() {
+    renderTabs();
+    const q = searchEl.value;
+    const hits = searchCatalog(q, st.type);
+    const shown = hits.slice(0, st.shown);
+    countEl.textContent = q.trim() ? `「${q.trim()}」の検索結果：${hits.length}機種` : `${hits.length}機種`;
+    listEl.innerHTML = shown.map((it) => {
+      const specs = it.specs.map((s) => SPEC_LABELS[it.type][s]).join("・");
+      return `<li><button type="button" class="cat-item" data-name="${escapeHTML(it.name)}">
+        <span class="cat-item-name">${escapeHTML(it.name)}</span>
+        <span class="cat-item-meta">${TYPE_LABEL[it.type]}／${escapeHTML(specs)}</span>
+        <span class="cat-item-chips">${borderChip(it)}${reviewMiniHTML(it.machine)}</span>
+      </button></li>`;
+    }).join("") || `<li class="rank-empty">該当する機種がありません。名前の一部や、ひらがなで試してみてください。</li>`;
+    moreWrap.hidden = hits.length <= st.shown;
+    if (hits.length > st.shown) moreBtn.textContent = `もっと見る（残り${hits.length - st.shown}件）`;
+  }
+
+  tabsEl.addEventListener("click", (e) => {
+    const t = e.target.closest(".rank-tab");
+    if (!t) return;
+    st.type = t.dataset.type;
+    st.shown = PAGE;
+    renderList();
+  });
+  searchEl.addEventListener("input", () => { st.shown = PAGE; renderList(); });
+  moreBtn.addEventListener("click", () => { st.shown += PAGE; renderList(); });
+  listEl.addEventListener("click", (e) => {
+    const b = e.target.closest(".cat-item");
+    if (b) openMachine(b.dataset.name);
+  });
+
+  /* ---------------- 詳細 ---------------- */
+  function borderBlockHTML(it) {
+    if (it.type !== "pachinko") {
+      return `<div class="cat-block"><h2>ボーダー</h2><p class="calc-foot">スロットは「ボーダー（1,000円あたりの回転数）」ではなく、設定や天井などで期待値を考えるため、ボーダーは掲載していません。</p></div>`;
+    }
+    if (!it.borders.length) {
+      return `<div class="cat-block"><h2>ボーダー</h2><p class="calc-foot">この機種のボーダーはDMMぱちタウンに掲載がないため、載せていません。</p></div>`;
+    }
+    const blocks = it.borders.map(({ e, i }) => {
+      const rows = BORDER_EXCHANGES.map((x, k) => e.b[k] == null ? "" :
+        `<tr><th>${escapeHTML(x.label)}</th><td>${e.b[k]}回転</td></tr>`).join("");
+      const cond = e.sapo ? `電サポ中の出玉増減 ${escapeHTML(e.sapo)}` : "条件の記載なし";
+      return `${e.label ? `<h3 class="cat-sub">${escapeHTML(e.label)}</h3>` : ""}
+        <table class="cat-table"><tbody>${rows}</tbody></table>
+        <p class="calc-foot">1,000円（250玉）あたりの回転数の目安。${cond}／<a href="https://p-town.dmm.com/machines/${e.id}/border" target="_blank" rel="noopener nofollow">出典：DMMぱちタウン</a>（<span>${fmtBorderDate()}</span>取得）</p>
+        <button type="button" class="btn-secondary cat-calc" data-i="${i}">この台のボーダーで期待値を計算する</button>`;
+    }).join("");
+    return `<div class="cat-block"><h2>ボーダー（1,000円あたりの回転数）</h2>${blocks}</div>`;
+  }
+  function fmtBorderDate() {
+    const [y, m, d] = BORDERS_AS_OF.split("-").map(Number);
+    return `${y}年${m}月${d}日`;
+  }
+
+  function openMachine(name) {
+    const it = byName.get(name);
+    if (!it) return;
+    const spec = it.specs[0];
+    const custom = typeof it.machine === "object";
+    const specs = it.specs.map((s) => SPEC_LABELS[it.type][s]).join("・");
+    const links = [];
+    if (it.id) links.push(`<a href="https://p-town.dmm.com/machines/${it.id}" target="_blank" rel="noopener nofollow">DMMぱちタウンの機種ページ</a>`);
+    links.push(`<a href="https://www.google.com/search?q=${encodeURIComponent(name + " 機種情報")}" target="_blank" rel="noopener">ウェブで検索</a>`);
+    detailView.innerHTML = `
+      <button type="button" class="step-back" id="cat-back">← 機種一覧へ</button>
+      <h1 class="cat-title">${escapeHTML(name)}</h1>
+      <p class="cat-tags"><span class="cat-chip">${TYPE_LABEL[it.type]}</span><span class="cat-chip">${escapeHTML(specs)}</span></p>
+      <p class="cat-desc">${escapeHTML(machineDesc(it.machine, it.type, spec))}</p>
+      ${custom ? "" : `<p class="calc-foot">※説明は、この機種が属する区分の一般的な特徴です。</p>`}
+      ${borderBlockHTML(it)}
+      <div class="cat-block">${reviewBoxHTML(it.machine) || `<p class="calc-foot">この機種のDMMぱちタウンの口コミ情報はありません。</p>`}</div>
+      <div class="cat-block" id="cat-vote"></div>
+      <div class="cat-actions">
+        <button type="button" class="btn-primary" id="cat-to-ledger">📒 この機種で収支ノートに記録する</button>
+      </div>
+      <p class="calc-foot cat-links">${links.join("　")}</p>
+      <p class="calc-foot">掲載値・口コミは参考情報で、出玉や勝ちを保証するものではありません。20歳未満の方は遊技できません。</p>`;
+    listView.hidden = true;
+    detailView.hidden = false;
+    renderVoteBox(document.getElementById("cat-vote"), it.machine);
+    detailView.querySelector("#cat-back").addEventListener("click", closeDetail);
+    detailView.querySelector("#cat-to-ledger").addEventListener("click", () => {
+      if (window.PS_LEDGER) window.PS_LEDGER.openWith(it.name, it.type);
+    });
+    detailView.querySelectorAll(".cat-calc").forEach((b) => b.addEventListener("click", () => {
+      if (window.PS_CALC_OPEN) { window.PS_CALC_OPEN(Number(b.dataset.i)); window.scrollTo(0, 0); }
+    }));
+    track("catalog_machine_view", { type: it.type });
+    window.scrollTo(0, 0);
+  }
+  function closeDetail() {
+    detailView.hidden = true;
+    detailView.innerHTML = "";
+    listView.hidden = false;
+    window.scrollTo(0, 0);
+  }
+
+  function openCatalog() {
+    closeDetail();
+    renderList();
+    showScreen("catalog");
+    track("catalog_view", {});
+  }
+
+  window.PS_CATALOG = { list, byName, search: searchCatalog, openMachine: (n) => { renderList(); showScreen("catalog"); openMachine(n); } };
+  window.PS_NAV = window.PS_NAV || {};
+  window.PS_NAV.catalog = openCatalog;
+
+  if (!new URLSearchParams(location.search).has("c") && location.hash === "#catalog") openCatalog();
+})();

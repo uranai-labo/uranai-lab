@@ -88,6 +88,7 @@
     else if (name === "gamble") document.getElementById("btn-goto-gamble").click();
     else if (name === "calc") openCalc();
     else if (name === "rank") openRank();
+    else if (window.PS_NAV && typeof window.PS_NAV[name] === "function") window.PS_NAV[name]();
     else showScreen("intro");
     window.scrollTo(0, 0);
   }
@@ -320,6 +321,7 @@
     renderCalc();
     showScreen("calc");
   }
+  window.PS_CALC_OPEN = openCalc;   // 機種カタログから「この台で計算する」で使う
 
   /* ---------------- ボーダーが甘い機種ランキング ---------------- */
   const rankTabs = document.getElementById("rank-tabs");
