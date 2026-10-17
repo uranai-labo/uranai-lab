@@ -819,3 +819,30 @@ body.menu-open{ overflow:hidden; }
 .rank-more{ text-align:center; margin:12px 0 0; }
 .rank-empty{ padding:14px 4px; color:var(--text-muted); font-size:.85rem; }
 .rank-nodata{ margin:8px 0 0; font-size:.72rem; line-height:1.7; color:var(--text-muted); }
+
+/* 計算機の機種検索 */
+.calc-field{ position:relative; display:flex; flex-direction:column; gap:6px; }
+.calc-field > label{ font-size:.85rem; color:var(--text-muted); }
+.calc-field[hidden], .calc-picked[hidden], .calc-manual-toggle[hidden]{ display:none; }
+.calc-suggest{
+  list-style:none; margin:0; padding:4px; max-height:300px; overflow-y:auto;
+  border:2px solid var(--accent-3); border-radius:12px; background:#fff;
+  box-shadow:0 10px 24px rgba(36,24,51,.18);
+}
+.calc-suggest[hidden]{ display:none; }
+.calc-suggest li[role=option]{
+  display:flex; flex-direction:column; gap:2px; padding:10px 10px; border-radius:8px; cursor:pointer;
+}
+.calc-suggest li[role=option]:hover, .calc-suggest li[role=option].active{ background:#f4eeff; }
+.sg-name{ font-size:.9rem; font-weight:700; line-height:1.5; overflow-wrap:anywhere; }
+.sg-name small{ font-weight:400; color:var(--text-muted); margin-left:2px; }
+.sg-meta{ font-size:.7rem; color:var(--text-muted); }
+.sg-note{ padding:10px; font-size:.78rem; line-height:1.6; color:var(--text-muted); }
+.calc-picked{
+  display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px;
+  padding:12px; border-radius:12px; background:#f4eeff; border:2px solid #e3d6ff;
+}
+.calc-picked-label{ flex:0 0 100%; font-size:.7rem; color:var(--accent-3); font-weight:700; }
+.calc-picked b{ flex:1; min-width:0; font-size:.95rem; line-height:1.5; overflow-wrap:anywhere; }
+.calc-manual-toggle{ margin:0; }
+.calc-manual-toggle .link-btn{ padding:0; }

@@ -293,9 +293,17 @@
       <p class="lead">ホールで実際に回った「1,000円あたりの回転数」を入れると、ボーダーとの差と、理論上の期待値がわかります。</p>
 
       <form id="calc-form" class="calc-form" autocomplete="off" novalidate>
-        <label>機種
-          <select id="calc-machine"></select>
-        </label>
+        <div class="calc-field" id="calc-search-row">
+          <label for="calc-search">機種を検索（名前の一部・ひらがな・頭文字）</label>
+          <input type="search" id="calc-search" role="combobox" aria-expanded="false" aria-controls="calc-suggest" aria-autocomplete="list" placeholder="例：まどか　ばけもの　eリゼロ" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <ul class="calc-suggest" id="calc-suggest" role="listbox" hidden></ul>
+        </div>
+        <div class="calc-picked" id="calc-picked" hidden>
+          <span class="calc-picked-label">選んだ機種</span>
+          <b id="calc-picked-name"></b>
+          <button type="button" class="link-btn" id="calc-change">変更する</button>
+        </div>
+        <p class="calc-manual-toggle"><button type="button" class="link-btn" id="calc-manual-toggle">機種を選ばず、ボーダーを自分で入力する</button></p>
         <label id="calc-exchange-row">交換率（貸玉4円）
           <select id="calc-exchange"></select>
         </label>

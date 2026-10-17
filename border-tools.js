@@ -102,40 +102,159 @@
   menuEl.querySelectorAll("a.menu-item").forEach((a) => a.addEventListener("click", () => closeMenu(false)));
 
   /* ---------------- ボーダー計算機 ---------------- */
-  const calcMachine = document.getElementById("calc-machine");
+  const calcSearch = document.getElementById("calc-search");
+  const calcSuggest = document.getElementById("calc-suggest");
+  const calcSearchRow = document.getElementById("calc-search-row");
+  const calcPicked = document.getElementById("calc-picked");
+  const calcPickedName = document.getElementById("calc-picked-name");
   const calcExchange = document.getElementById("calc-exchange");
   const calcExchangeRow = document.getElementById("calc-exchange-row");
   const calcManualRow = document.getElementById("calc-manual-row");
   const calcManual = document.getElementById("calc-manual");
+  const calcManualToggle = document.getElementById("calc-manual-toggle");
   const calcInfo = document.getElementById("calc-border-info");
   const calcRate = document.getElementById("calc-rate");
   const calcHour = document.getElementById("calc-spins-hour");
   const calcResult = document.getElementById("calc-result");
   let calcTracked = false;
+  // null=未選択 / "manual"=手入力 / 数値=BORDER_DATAの添字
+  let calcSel = null;
+  let suggestItems = [];
+  let suggestActive = -1;
 
-  function buildCalcSelects() {
-    let html = `<option value="">機種を選んでください</option><option value="manual">（機種を選ばず、ボーダーを自分で入力）</option>`;
-    CAT_ORDER.forEach((cat) => {
-      const opts = BORDER_DATA.map((e, i) => ({ e, i })).filter((x) => x.e.cat === cat)
-        .map((x) => `<option value="${x.i}">${escapeHTML(entryTitle(x.e))}</option>`).join("");
-      if (opts) html += `<optgroup label="${escapeHTML(PACHINKO_LABELS[cat])}">${opts}</optgroup>`;
-    });
-    calcMachine.innerHTML = html;
-    calcExchange.innerHTML = BORDER_EXCHANGES.map((x, i) => `<option value="${i}">${escapeHTML(x.label)}</option>`).join("");
+  calcExchange.innerHTML = BORDER_EXCHANGES.map((x, i) => `<option value="${i}">${escapeHTML(x.label)}</option>`).join("");
+
+  // 検索用の正規化：全角半角・大文字小文字・カタカナ/ひらがな・空白や記号の差を吸収する
+  function normalize(s) {
+    return String(s).normalize("NFKC").toLowerCase()
+      .replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+      .replace(/[^\p{L}\p{N}ー]/gu, "");
   }
-  buildCalcSelects();
+  const searchIndex = BORDER_DATA.map((e, i) => ({
+    i,
+    name: normalize(e.name + e.label),
+    kana: normalize(e.kana || ""),
+  }));
+  const noDataIndex = BORDER_NO_DATA.map((n) => ({ n, name: normalize(n) }));
 
-  // 現在の入力から {border, entry, error} を返す
+  // 空白区切りは AND 検索。名前・読みの先頭に近い一致を上位にする
+  function runSearch(q) {
+    const tokens = String(q).normalize("NFKC").split(/\s+/).map(normalize).filter(Boolean);
+    if (!tokens.length) return { hits: [], noData: [] };
+    const scored = [];
+    // 機種名の頭の「e」「P」「PA」（スマパチ/通常機の区別）を付けて入力されても探せるようにする
+    const pos = (hay, t) => {
+      let p = hay.indexOf(t);
+      if (p < 0 && /^(pa|p|e)./.test(t)) p = hay.indexOf(t.replace(/^(pa|p|e)/, ""));
+      return p;
+    };
+    searchIndex.forEach((x) => {
+      let score = 0;
+      for (const t of tokens) {
+        const inName = pos(x.name, t);
+        const inKana = pos(x.kana, t);
+        if (inName < 0 && inKana < 0) return;
+        score += Math.min(inName < 0 ? 99 : inName, inKana < 0 ? 99 : inKana);
+      }
+      scored.push({ i: x.i, score });
+    });
+    scored.sort((a, b) => a.score - b.score || a.i - b.i);
+    const noData = noDataIndex.filter((x) => tokens.every((t) => x.name.indexOf(t) >= 0)).map((x) => x.n);
+    return { hits: scored.map((s) => s.i), noData };
+  }
+
+  function entryOptionHTML(i, idx) {
+    const e = BORDER_DATA[i];
+    return `<li role="option" id="calc-opt-${idx}" data-i="${i}" aria-selected="${idx === suggestActive}"${idx === suggestActive ? ' class="active"' : ""}><span class="sg-name">${escapeHTML(e.name)}${e.label ? `<small>【${escapeHTML(e.label)}】</small>` : ""}</span><span class="sg-meta">${escapeHTML(PACHINKO_LABELS[e.cat])}・等価${e.b[0]}回転</span></li>`;
+  }
+
+  function renderSuggest() {
+    const q = calcSearch.value;
+    if (!q.trim()) { hideSuggest(); return; }
+    const { hits, noData } = runSearch(q);
+    suggestItems = hits.slice(0, 30);
+    if (suggestActive >= suggestItems.length) suggestActive = suggestItems.length - 1;
+    let html = suggestItems.map((i, idx) => entryOptionHTML(i, idx)).join("");
+    if (hits.length > 30) html += `<li class="sg-note">他${hits.length - 30}件。もう少し文字を足して絞り込んでください。</li>`;
+    if (!hits.length && !noData.length) {
+      html = `<li class="sg-note">該当する機種がありません。名前の一部や、ひらがなで試してみてください。</li>`;
+    }
+    noData.forEach((n) => { html += `<li class="sg-note">${escapeHTML(n)}：DMMぱちタウンにボーダーの掲載がないため計算できません。</li>`; });
+    calcSuggest.innerHTML = html;
+    calcSuggest.hidden = false;
+    calcSearch.setAttribute("aria-expanded", "true");
+  }
+  function hideSuggest() {
+    calcSuggest.hidden = true;
+    calcSuggest.innerHTML = "";
+    suggestItems = [];
+    suggestActive = -1;
+    calcSearch.setAttribute("aria-expanded", "false");
+    calcSearch.removeAttribute("aria-activedescendant");
+  }
+  function setActive(n) {
+    if (!suggestItems.length) return;
+    suggestActive = (n + suggestItems.length) % suggestItems.length;
+    calcSuggest.querySelectorAll("li[role=option]").forEach((li, idx) => {
+      li.classList.toggle("active", idx === suggestActive);
+      li.setAttribute("aria-selected", idx === suggestActive);
+    });
+    const li = document.getElementById(`calc-opt-${suggestActive}`);
+    calcSearch.setAttribute("aria-activedescendant", li.id);
+    li.scrollIntoView({ block: "nearest" });
+  }
+
+  function selectEntry(i) {
+    calcSel = i;
+    calcExchange.value = "0";
+    calcSearch.value = "";
+    hideSuggest();
+    renderCalc();
+    calcRate.focus();
+  }
+  function clearSelection() {
+    calcSel = null;
+    renderCalc();
+    calcSearch.focus();
+  }
+
+  calcSearch.addEventListener("input", () => { suggestActive = -1; renderSuggest(); });
+  calcSearch.addEventListener("focus", renderSuggest);
+  calcSearch.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); if (calcSuggest.hidden) renderSuggest(); setActive(suggestActive + 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive(suggestActive - 1); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      if (suggestActive >= 0) selectEntry(suggestItems[suggestActive]);
+      else if (suggestItems.length === 1) selectEntry(suggestItems[0]);
+    } else if (e.key === "Escape") hideSuggest();
+  });
+  // mousedown で選ぶ（blurより先に処理して、タップでも確実に選べるようにする）
+  calcSuggest.addEventListener("mousedown", (e) => {
+    const li = e.target.closest("li[data-i]");
+    if (!li) return;
+    e.preventDefault();
+    selectEntry(Number(li.dataset.i));
+  });
+  document.addEventListener("click", (e) => {
+    if (!calcSearchRow.contains(e.target)) hideSuggest();
+  });
+  document.getElementById("calc-change").addEventListener("click", clearSelection);
+  calcManualToggle.addEventListener("click", () => {
+    if (calcSel === "manual") { calcSel = null; renderCalc(); calcSearch.focus(); }
+    else { calcSel = "manual"; hideSuggest(); renderCalc(); calcManual.focus(); }
+  });
+
+  // 現在の入力から {border, entry, ...} を返す
   function currentBorder() {
-    const v = calcMachine.value;
-    if (v === "manual") {
+    if (calcSel === "manual") {
       const b = parseFloat(calcManual.value);
       if (!Number.isFinite(b)) return { border: null, hint: "ボーダーを入力してください。" };
       if (b < 1 || b > 60) return { border: null, hint: "ボーダーは1〜60の範囲で入力してください。" };
       return { border: b, manual: true };
     }
-    if (v === "") return { border: null, hint: "機種を選ぶと、ボーダーが表示されます。" };
-    const e = BORDER_DATA[Number(v)];
+    if (calcSel == null) return { border: null, hint: "機種を検索して選ぶと、ボーダーが表示されます。" };
+    const e = BORDER_DATA[calcSel];
     const ex = BORDER_EXCHANGES[Number(calcExchange.value)];
     const b = e.b[Number(calcExchange.value)];
     if (b == null) return { border: null, entry: e, hint: `この機種の「${ex.label}」のボーダーはDMMぱちタウンに掲載がありません。` };
@@ -143,9 +262,15 @@
   }
 
   function renderCalc() {
-    const manual = calcMachine.value === "manual";
+    const manual = calcSel === "manual";
+    const picked = typeof calcSel === "number";
+    calcSearchRow.hidden = picked || manual;
+    calcPicked.hidden = !picked;
+    if (picked) calcPickedName.textContent = entryTitle(BORDER_DATA[calcSel]);
     calcManualRow.hidden = !manual;
-    calcExchangeRow.hidden = manual;
+    calcExchangeRow.hidden = !picked;
+    calcManualToggle.textContent = manual ? "機種を検索して選ぶ" : "機種を選ばず、ボーダーを自分で入力する";
+    calcManualToggle.parentElement.hidden = picked;
     const cb = currentBorder();
 
     if (cb.border == null) {
@@ -184,14 +309,14 @@
     if (!calcTracked) { calcTracked = true; track("border_calc", { mode: cb.manual ? "manual" : "machine" }); }
   }
 
-  [calcMachine, calcExchange, calcManual, calcRate, calcHour].forEach((el) => {
+  [calcExchange, calcManual, calcRate, calcHour].forEach((el) => {
     el.addEventListener("input", renderCalc);
     el.addEventListener("change", renderCalc);
   });
   document.getElementById("calc-form").addEventListener("submit", (e) => e.preventDefault());
 
   function openCalc(entryIndex) {
-    if (entryIndex != null) calcMachine.value = String(entryIndex);
+    if (entryIndex != null) { calcSel = entryIndex; calcExchange.value = "0"; }
     renderCalc();
     showScreen("calc");
   }
@@ -258,8 +383,6 @@
   rankList.addEventListener("click", (e) => {
     const b = e.target.closest("[data-calc]");
     if (!b) return;
-    calcMachine.value = b.dataset.calc;
-    calcExchange.value = "0";
     openCalc(Number(b.dataset.calc));
     window.scrollTo(0, 0);
     track("rank_to_calc", {});
