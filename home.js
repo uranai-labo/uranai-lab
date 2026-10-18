@@ -11,8 +11,10 @@
     const ol = $("home-top3");
     if (!ol || typeof BORDER_DATA === "undefined") return;
     // ランキングページの標準表示と同じ条件（電サポ中の出玉増減-5%・等価・順位対象のみ）
+    // ホームには、よく打たれている機種（占いの対象と同じ条件＝設置店舗数が多い現行機）だけを出す
+    const popular = new Set(MACHINE_ROWS.filter((r) => r.pool).map((r) => r.id));
     const items = BORDER_DATA.map((e, i) => ({ e, i }))
-      .filter((x) => x.e.rank && x.e.b[0] != null && x.e.sapo === "-5%")
+      .filter((x) => x.e.rank && x.e.b[0] != null && x.e.sapo === "-5%" && popular.has(x.e.id))
       .sort((a, b) => a.e.b[0] - b.e.b[0] || a.e.name.localeCompare(b.e.name, "ja"))
       .slice(0, 3);
     ol.innerHTML = items.map((x, n) => {

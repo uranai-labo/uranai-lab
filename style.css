@@ -1034,3 +1034,11 @@ details.ledger-notice[open] > summary{ margin-bottom:6px; }
 .home-fab:active{ transform:scale(.97); }
 body.menu-open .home-fab{ display:none; }
 body{ padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px)); }
+
+/* 機種カタログ：並び順・設置情報 */
+.cat-sort{ display:flex; align-items:center; gap:8px; margin:10px 0 0; font-size:.78rem; color:var(--text-muted); }
+.cat-sort select{ flex:1; font-size:.85rem; padding:8px 10px; border-radius:10px; border:2px solid #efe6ff; font-family:inherit; color:var(--text); background:#fff; }
+.cat-chip-new{ background:#fff0f6; color:var(--accent); }
+.cat-chip-shops{ background:#eef5ff; color:#1d6fd8; }
+.cat-install{ margin:0 0 10px; font-size:.82rem; line-height:1.7; }
+.cat-install small{ color:var(--text-muted); font-size:.68rem; }

@@ -404,12 +404,15 @@
       <button class="step-back" data-nav="intro">← トップに戻る</button>
       <div id="cat-list-view">
         <h1>📚 機種カタログ</h1>
-        <p class="lead">当サイトに登場する機種を、名前・ひらがな・頭文字で探せます。ボーダー（パチンコ）、口コミ評価、みんなの投票を機種ごとにまとめて見られます。</p>
+        <p class="lead">いまホールに設置されている機種と新台（導入予定を含む）を、名前・ひらがな・頭文字で探せます。ボーダー（パチンコ）、口コミ評価、みんなの投票を機種ごとにまとめて見られます。撤去済みの古い機種は掲載していません。</p>
         <div class="rank-tabs" id="cat-tabs" role="tablist" aria-label="種別"></div>
         <div class="calc-field">
           <label for="cat-search">機種を検索（名前の一部・ひらがな・頭文字）</label>
           <input type="search" id="cat-search" placeholder="例：まどか　ばけもの　はくせん" autocomplete="off" autocapitalize="off" spellcheck="false">
         </div>
+        <label class="cat-sort">並び順
+          <select id="cat-sort"><option value="popular">設置店舗数が多い順（人気）</option><option value="new">新しい順</option><option value="name">名前順（五十音）</option></select>
+        </label>
         <p class="cat-count" id="cat-count" aria-live="polite"></p>
         <ul class="cat-list" id="cat-list"></ul>
         <p class="rank-more" id="cat-more-wrap"><button type="button" class="btn-secondary" id="cat-more">もっと見る</button></p>
@@ -581,7 +584,7 @@
 <script src="votes-config.js"></script>
 <script src="votes.js"></script>
 <script src="borders.js"></script>
-<script src="catalog.js"></script>
+<script src="machine-db.js"></script>
 <script src="script.js"></script>
 <script src="border-tools.js"></script>
 <script src="catalog-ui.js"></script>

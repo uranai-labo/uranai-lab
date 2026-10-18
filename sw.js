@@ -3,10 +3,10 @@
    ・通信できるときは常に最新を取りに行き（ネットワーク優先）、できないときだけキャッシュを使う。
      → 更新を公開した直後でも、古い画面が居座らない。
    ・収支ノートのデータはlocalStorageにあり、サービスワーカーは触らない。 */
-const CACHE = "pslab-static-v1";
+const CACHE = "pslab-static-v2";
 const PRECACHE = [
   "./", "index.html", "style.css", "script.js", "border-tools.js", "catalog-ui.js", "ledger.js", "home.js",
-  "borders.js", "catalog.js", "reviews.js", "votes.js", "votes-config.js",
+  "borders.js", "machine-db.js", "reviews.js", "votes.js", "votes-config.js",
   "manifest.webmanifest", "images/favicon.svg", "images/icon-192.png", "images/icon-512.png",
   "images/apple-touch-icon.png", "images/roto-san.webp", "privacy.html", "terms.html",
 ];

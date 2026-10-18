@@ -15,24 +15,25 @@ function normalizeSearch(s) {
   const PAGE = 20;
 
   /* ---------------- 機種リストの組み立て ---------------- */
+  // 機種データベース（machine-db.js）の全機種：いまホールに設置されている機種＋新台・導入予定
   const list = [];
   const byName = new Map();
-  ["pachinko", "slot"].forEach((type) => {
-    Object.keys(MACHINES[type]).forEach((spec) => {
-      MACHINES[type][spec].forEach((m) => {
-        const name = machineName(m);
-        const hit = byName.get(name);
-        if (hit) { if (!hit.specs.includes(spec)) hit.specs.push(spec); return; }
-        const meta = (typeof MACHINE_META !== "undefined" && MACHINE_META[name]) || {};
-        const it = {
-          name, type, specs: [spec], machine: m, id: meta.id || null,
-          nameN: normalizeSearch(name), kanaN: normalizeSearch(meta.kana || ""),
-          borders: BORDER_DATA.map((e, i) => ({ e, i })).filter((x) => x.e.name === name),
-        };
-        byName.set(name, it);
-        list.push(it);
-      });
-    });
+  const bordersByName = new Map();
+  BORDER_DATA.forEach((e, i) => { if (!bordersByName.has(e.name)) bordersByName.set(e.name, []); bordersByName.get(e.name).push({ e, i }); });
+  const TODAY = new Date();
+  const NEW_DAYS = 180;
+  MACHINE_ROWS.forEach((r) => {
+    const introDate = r.intro ? new Date(r.intro + "T00:00:00") : null;
+    const it = {
+      name: r.name, type: r.type, specs: [r.spec], machine: r.desc ? { name: r.name, desc: r.desc } : r.name, id: r.id,
+      nameN: normalizeSearch(r.name), kanaN: normalizeSearch(r.kana || ""),
+      borders: bordersByName.get(r.name) || [],
+      shops: r.shops, intro: r.intro, introDate,
+      isFuture: !!(introDate && introDate > TODAY),
+      isNew: !!(introDate && introDate <= TODAY && (TODAY - introDate) / 86400000 <= NEW_DAYS),
+    };
+    byName.set(r.name, it);
+    list.push(it);
   });
 
   // 機種名の頭の「e」「P」「PA」を付けて入力されても探せるようにする
@@ -42,10 +43,18 @@ function normalizeSearch(s) {
     return p;
   }
   // 空白区切りはAND検索。名前・読みの先頭に近い一致を上位にする。type=""なら全種別
-  function searchCatalog(q, type) {
+  // 並び順：popular=設置店舗数が多い順／new=導入が新しい順／name=読み仮名順
+  function sortList(arr, sort) {
+    const a = arr.slice();
+    if (sort === "new") a.sort((x, y) => (y.intro || "").localeCompare(x.intro || "") || y.shops - x.shops);
+    else if (sort === "name") a.sort((x, y) => (x.kanaN || x.nameN).localeCompare(y.kanaN || y.nameN, "ja"));
+    else a.sort((x, y) => y.shops - x.shops || (y.intro || "").localeCompare(x.intro || ""));
+    return a;
+  }
+  function searchCatalog(q, type, sort) {
     const tokens = String(q).normalize("NFKC").split(/\s+/).map(normalizeSearch).filter(Boolean);
-    const pool = type ? list.filter((x) => x.type === type) : list;
-    if (!tokens.length) return pool.slice();
+    const pool = sortList(type ? list.filter((x) => x.type === type) : list, sort || "popular");
+    if (!tokens.length) return pool;
     const scored = [];
     pool.forEach((x, idx) => {
       let score = 0;
@@ -72,10 +81,20 @@ function normalizeSearch(s) {
   const moreBtn = document.getElementById("cat-more");
   const listView = document.getElementById("cat-list-view");
   const detailView = document.getElementById("cat-detail-view");
+  const sortEl = document.getElementById("cat-sort");
   const st = { type: "", shown: PAGE };
 
+  // 設置状況のチップ：設置店舗数（DMMぱちタウン）、新台、導入予定
+  function statusChips(it) {
+    let h = "";
+    if (it.isFuture) h += `<span class="cat-chip cat-chip-new">導入予定 ${escapeHTML(it.intro.replace(/-/g, "/"))}</span>`;
+    else if (it.isNew) h += `<span class="cat-chip cat-chip-new">新台</span>`;
+    if (!it.isFuture && it.shops > 0) h += `<span class="cat-chip cat-chip-shops">設置 ${it.shops.toLocaleString("ja-JP")}店</span>`;
+    return h;
+  }
+
   function borderChip(it) {
-    const vals = it.borders.filter((x) => x.e.b[0] != null).map((x) => x.e.b[0]);
+    const vals = it.borders.filter((x) => x.e.b[0] != null && !x.e.odd && !/^設定/.test(x.e.label)).map((x) => x.e.b[0]);
     if (!vals.length) return "";
     const lo = Math.min(...vals), hi = Math.max(...vals);
     return `<span class="cat-chip">等価${lo === hi ? lo : `${lo}〜${hi}`}回転</span>`;
@@ -91,7 +110,7 @@ function normalizeSearch(s) {
   function renderList() {
     renderTabs();
     const q = searchEl.value;
-    const hits = searchCatalog(q, st.type);
+    const hits = searchCatalog(q, st.type, sortEl.value);
     const shown = hits.slice(0, st.shown);
     countEl.textContent = q.trim() ? `「${q.trim()}」の検索結果：${hits.length}機種` : `${hits.length}機種`;
     listEl.innerHTML = shown.map((it) => {
@@ -99,7 +118,7 @@ function normalizeSearch(s) {
       return `<li><button type="button" class="cat-item" data-name="${escapeHTML(it.name)}">
         <span class="cat-item-name">${escapeHTML(it.name)}</span>
         <span class="cat-item-meta">${TYPE_LABEL[it.type]}／${escapeHTML(specs)}</span>
-        <span class="cat-item-chips">${borderChip(it)}${reviewMiniHTML(it.machine)}</span>
+        <span class="cat-item-chips">${statusChips(it)}${borderChip(it)}${reviewMiniHTML(it.machine)}</span>
       </button></li>`;
     }).join("") || `<li class="rank-empty">該当する機種がありません。名前の一部や、ひらがなで試してみてください。</li>`;
     moreWrap.hidden = hits.length <= st.shown;
@@ -114,6 +133,7 @@ function normalizeSearch(s) {
     renderList();
   });
   searchEl.addEventListener("input", () => { st.shown = PAGE; renderList(); });
+  sortEl.addEventListener("change", () => { st.shown = PAGE; renderList(); });
   moreBtn.addEventListener("click", () => { st.shown += PAGE; renderList(); });
   listEl.addEventListener("click", (e) => {
     const b = e.target.closest(".cat-item");
@@ -131,11 +151,12 @@ function normalizeSearch(s) {
     const blocks = it.borders.map(({ e, i }) => {
       const rows = BORDER_EXCHANGES.map((x, k) => e.b[k] == null ? "" :
         `<tr><th>${escapeHTML(x.label)}</th><td>${e.b[k]}回転</td></tr>`).join("");
-      const cond = e.sapo ? `電サポ中の出玉増減 ${escapeHTML(e.sapo)}` : "条件の記載なし";
+      const cond = e.sapo ? `電サポ中の出玉増減 ${escapeHTML(e.sapo)}` : (e.note ? escapeHTML(e.note) : "条件の記載なし");
       return `${e.label ? `<h3 class="cat-sub">${escapeHTML(e.label)}</h3>` : ""}
         <table class="cat-table"><tbody>${rows}</tbody></table>
         <p class="calc-foot">1,000円（250玉）あたりの回転数の目安。${cond}／<a href="https://p-town.dmm.com/machines/${e.id}/border" target="_blank" rel="noopener nofollow">出典：DMMぱちタウン</a>（<span>${fmtBorderDate()}</span>取得）</p>
-        <button type="button" class="btn-secondary cat-calc" data-i="${i}">この台のボーダーで期待値を計算する</button>`;
+        ${e.odd ? `<p class="calc-error">このボーダー値は、一般的な範囲（8〜60回転）から外れているか、DMMの表の数値に矛盾があるため、参考にならない可能性があります。期待値の計算には使えません（ハネモノ・一発台など特殊な機種のことがあります）。</p>`
+          : `<button type="button" class="btn-secondary cat-calc" data-i="${i}">この台のボーダーで期待値を計算する</button>`}`;
     }).join("");
     return `<div class="cat-block"><h2>ボーダー（1,000円あたりの回転数）</h2>${blocks}</div>`;
   }
@@ -157,6 +178,7 @@ function normalizeSearch(s) {
       <button type="button" class="step-back" id="cat-back">← 機種一覧へ</button>
       <h1 class="cat-title">${escapeHTML(name)}</h1>
       <p class="cat-tags"><span class="cat-chip">${TYPE_LABEL[it.type]}</span><span class="cat-chip">${escapeHTML(specs)}</span></p>
+      <p class="cat-install">${it.isFuture ? `🆕 導入予定：${escapeHTML(it.intro.replace(/-/g, "/"))}（まだホールには設置されていません）` : `導入日：${escapeHTML((it.intro || "不明").replace(/-/g, "/"))}${it.shops > 0 ? `／設置店舗数：${it.shops.toLocaleString("ja-JP")}店` : ""}`}<br><small>設置店舗数はDMMぱちタウンの掲載値（${MACHINE_DB_ASOF.replace(/-/g, "/")}取得）で、実際の設置状況は店舗により異なります。</small></p>
       <p class="cat-desc">${escapeHTML(machineDesc(it.machine, it.type, spec))}</p>
       ${custom ? "" : `<p class="calc-foot">※説明は、この機種が属する区分の一般的な特徴です。</p>`}
       ${borderBlockHTML(it)}

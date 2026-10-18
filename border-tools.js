@@ -7,7 +7,7 @@
   "use strict";
 
   const PACHINKO_LABELS = SPEC_LABELS.pachinko;
-  const CAT_ORDER = ["amadegi", "lightmiddle", "middle", "highspec"];
+  const CAT_ORDER = ["amadegi", "lightmiddle", "middle", "highspec", "other"];
   const RANK_STEP = 15;
 
   function fmtDate(iso) {
@@ -166,7 +166,7 @@
 
   function entryOptionHTML(i, idx) {
     const e = BORDER_DATA[i];
-    return `<li role="option" id="calc-opt-${idx}" data-i="${i}" aria-selected="${idx === suggestActive}"${idx === suggestActive ? ' class="active"' : ""}><span class="sg-name">${escapeHTML(e.name)}${e.label ? `<small>【${escapeHTML(e.label)}】</small>` : ""}</span><span class="sg-meta">${escapeHTML(PACHINKO_LABELS[e.cat])}・等価${e.b[0]}回転</span></li>`;
+    return `<li role="option" id="calc-opt-${idx}" data-i="${i}" aria-selected="${idx === suggestActive}"${idx === suggestActive ? ' class="active"' : ""}><span class="sg-name">${escapeHTML(e.name)}${e.label ? `<small>【${escapeHTML(e.label)}】</small>` : ""}</span><span class="sg-meta">${escapeHTML(PACHINKO_LABELS[e.cat])}${e.odd ? "・ボーダー参考外" : `・等価${e.b[0]}回転`}</span></li>`;
   }
 
   function renderSuggest() {
@@ -257,6 +257,7 @@
     if (calcSel == null) return { border: null, hint: "機種を検索して選ぶと、ボーダーが表示されます。" };
     const e = BORDER_DATA[calcSel];
     const ex = BORDER_EXCHANGES[Number(calcExchange.value)];
+    if (e.odd) return { border: null, entry: e, hint: `この機種のボーダー値（${e.b[0]}回転）は、一般的な範囲（8〜60回転）から外れているか、DMMの表の数値に矛盾があるため、参考にならない可能性があります。このボーダーでは期待値を計算しません（ハネモノ・一発台など特殊な機種のことがあります）。` };
     const b = e.b[Number(calcExchange.value)];
     if (b == null) return { border: null, entry: e, hint: `この機種の「${ex.label}」のボーダーはDMMぱちタウンに掲載がありません。` };
     return { border: b, entry: e, ex };
@@ -280,7 +281,7 @@
       calcInfo.innerHTML = `ボーダー：<b>${cb.border}回転</b>／1,000円（入力値）`;
     } else {
       const e = cb.entry;
-      const cond = e.sapo ? `電サポ中の出玉増減 ${escapeHTML(e.sapo)}` : "条件の記載なし";
+      const cond = e.sapo ? `電サポ中の出玉増減 ${escapeHTML(e.sapo)}` : (e.note ? escapeHTML(e.note) : "条件の記載なし");
       calcInfo.innerHTML = `ボーダー：<b>${cb.border}回転</b>／1,000円（${escapeHTML(cb.ex.label)}）<br><small>DMMぱちタウン掲載値・${cond}・${fmtDate(BORDERS_AS_OF)}取得　<a href="${sourceUrl(e)}" target="_blank" rel="noopener">出典を見る</a></small>`;
     }
 
@@ -342,7 +343,7 @@
   function renderRankTabs() {
     const base = BORDER_DATA.filter((e) => e.rank && e.b[0] != null && (rankOther.checked || e.sapo === "-5%"));
     const tabs = [{ key: "all", label: "すべて", n: base.length }]
-      .concat(CAT_ORDER.map((c) => ({ key: c, label: PACHINKO_LABELS[c], n: base.filter((e) => e.cat === c).length })));
+      .concat(CAT_ORDER.map((c) => ({ key: c, label: PACHINKO_LABELS[c], n: base.filter((e) => e.cat === c).length })).filter((t) => t.n > 0));
     rankTabs.innerHTML = tabs.map((t) =>
       `<button type="button" role="tab" class="rank-tab${t.key === rankState.cat ? " active" : ""}" aria-selected="${t.key === rankState.cat}" data-cat="${t.key}">${escapeHTML(t.label)}<small>${t.n}</small></button>`).join("");
   }
@@ -390,8 +391,9 @@
     track("rank_to_calc", {});
   });
 
-  document.getElementById("rank-nodata").textContent =
-    `DMMぱちタウンにボーダーの掲載がなく、並べていない機種：${BORDER_NO_DATA.join("、")}（${fmtDate(BORDERS_AS_OF)}時点）`;
+  document.getElementById("rank-nodata").textContent = BORDER_NO_DATA.length
+    ? `設置されている機種のうち、DMMぱちタウンにボーダーの掲載がなく並べていない機種が${BORDER_NO_DATA.length}機種あります（${fmtDate(BORDERS_AS_OF)}時点）。機種名で計算機を検索すると、掲載の有無が分かります。`
+    : "";
 
   function openRank() {
     renderRank();

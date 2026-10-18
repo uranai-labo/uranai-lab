@@ -240,7 +240,9 @@
      交換率が等価でない店・持ち玉比率・出玉の取りこぼしなどでズレるため、あくまで目安として表示する。 */
   function evFor(e) {
     if (e.type !== "pachinko" || e.rate == null || !(e.invest > 0) || typeof BORDER_DATA === "undefined") return null;
-    const hits = BORDER_DATA.filter((x) => x.name === e.machine && x.b[0] != null);
+    const hits = BORDER_DATA.filter((x) => x.name === e.machine && x.b[0] != null && !x.odd);
+    const hasOdd = BORDER_DATA.some((x) => x.name === e.machine && x.odd);
+    if (hasOdd) return null;                   // 参考にならないボーダー（特殊機）は期待値を出さない
     if (hits.length !== 1) return null;       // 掲載なし／条件違いが複数ある機種は出さない
     const b = hits[0].b[0];
     return { ev: Math.round(e.invest * (e.rate / b - 1)), border: b };
