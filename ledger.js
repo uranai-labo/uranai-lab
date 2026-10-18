@@ -24,7 +24,7 @@
   const BACKUP_NUDGE_DAYS = 14;
 
   /* ---------------- 保存 ---------------- */
-  let data = { v: 1, entries: [], fortunes: {} };
+  let data = { v: 1, entries: [], fortunes: {}, del: {} };
   let storageOk = true;
   let editingId = null;
 
@@ -34,8 +34,12 @@
 
   // 読み込んだ／取り込んだデータを検証して、想定した形のものだけ残す
   function sanitize(o) {
-    const out = { v: 1, entries: [], fortunes: {} };
+    const out = { v: 1, entries: [], fortunes: {}, del: {} };
     if (!o || typeof o !== "object") return out;
+    // 削除済みの記録（端末をまたいだ同期で、消した記録が復活しないための印）
+    if (o.del && typeof o.del === "object") {
+      Object.keys(o.del).slice(0, 5000).forEach((k) => { const t = Number(o.del[k]); if (Number.isFinite(t) && t > 0) out.del[clampStr(k, 40)] = t; });
+    }
     (Array.isArray(o.entries) ? o.entries : []).forEach((e) => {
       if (!e || !isDate(e.date)) return;
       const invest = intIn(e.invest, 0, 9999999), recover = intIn(e.recover, 0, 9999999);
@@ -49,6 +53,7 @@
         invest, recover,
         rate: Number.isFinite(rate) && rate >= 1 && rate <= 60 ? rate : null,
         memo: clampStr(e.memo, 200),
+        u: Number.isFinite(Number(e.u)) && Number(e.u) > 0 ? Number(e.u) : 0,   // 最終更新時刻（同期でどちらが新しいか決める）
       });
     });
     const f = o.fortunes && typeof o.fortunes === "object" ? o.fortunes : {};
@@ -64,6 +69,30 @@
     return out;
   }
 
+  // 2つのデータを統合する（端末間の同期・バックアップの読み込み用）。記録はIDごとに新しい方を採用し、
+  // 削除の印が新しければ削除、占い履歴は和集合。
+  function mergeData(a, b) {
+    const out = { v: 1, entries: [], fortunes: {}, del: {} };
+    const del = Object.assign({}, a.del);
+    Object.keys(b.del || {}).forEach((k) => { del[k] = Math.max(del[k] || 0, b.del[k]); });
+    const map = new Map();
+    a.entries.concat(b.entries).forEach((e) => { const cur = map.get(e.id); if (!cur || e.u > cur.u) map.set(e.id, e); });
+    map.forEach((e, id) => { if (!(del[id] && del[id] >= e.u)) out.entries.push(e); });
+    const cutoff = Date.now() - 400 * 86400000;
+    Object.keys(del).forEach((k) => { if (del[k] > cutoff) out.del[k] = del[k]; });
+    new Set(Object.keys(a.fortunes).concat(Object.keys(b.fortunes))).forEach((d) => {
+      const cur = (a.fortunes[d] || []).slice();
+      const seen = new Set(cur.map((r) => r.t + r.kind));
+      (b.fortunes[d] || []).forEach((r) => { if (!seen.has(r.t + r.kind)) cur.push(r); });
+      out.fortunes[d] = cur.sort((x, y) => x.t - y.t).slice(-MAX_FORTUNES_PER_DAY);
+    });
+    return out;
+  }
+  // 内容が同じか比べるための並び替え済み文字列
+  function canon(d) {
+    return JSON.stringify([d.entries.slice().sort((x, y) => (x.id < y.id ? -1 : 1)), Object.keys(d.fortunes).sort().map((k) => [k, d.fortunes[k]]), Object.keys(d.del).sort().map((k) => [k, d.del[k]])]);
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
@@ -71,10 +100,14 @@
     } catch (e) { /* 壊れたデータ・読み取り不可：空で始める */ }
     try { localStorage.setItem(KEY + "_t", "1"); localStorage.removeItem(KEY + "_t"); storageOk = true; } catch (e) { storageOk = false; }
   }
-  function save() {
+  function persistLocal() {
     try { localStorage.setItem(KEY, JSON.stringify(data)); storageOk = true; } catch (e) { storageOk = false; }
     el.warn.hidden = storageOk;
+  }
+  function save() {
+    persistLocal();
     requestPersist();
+    scheduleSync();
   }
 
   // ブラウザに「容量不足でも自動削除しない保存領域」を頼む（許可されれば、ブラウザが勝手に消しにくくなる。
@@ -272,7 +305,7 @@
       rate = Number(el.rate.value);
       if (!Number.isFinite(rate) || rate < 1 || rate > 60) return showError("実際の回転数は1〜60の範囲で入力してください。");
     }
-    const entry = { id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)), date, type: el.type.value, machine: clampStr(machine, 60), invest, recover, rate, memo: clampStr(el.memo.value.trim(), 200) };
+    const entry = { id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)), date, type: el.type.value, machine: clampStr(machine, 60), invest, recover, rate, memo: clampStr(el.memo.value.trim(), 200), u: Date.now() };
     const i = data.entries.findIndex((x) => x.id === entry.id);
     if (i >= 0) data.entries[i] = entry; else data.entries.push(entry);
     save();
@@ -291,6 +324,7 @@
     if (btn.dataset.act === "del") {
       if (!confirm(`${fmtDay(e.date)}「${e.machine}」の記録を削除しますか？（元に戻せません）`)) return;
       data.entries = data.entries.filter((x) => x.id !== id);
+      data.del[id] = Date.now();
       save(); renderAll();
     } else {
       editingId = id;
@@ -360,7 +394,7 @@
   function msg(t) { el.toolsMsg.textContent = t; }
 
   el.exportJson.addEventListener("click", () => {
-    download(`shushi-note-${stamp()}.json`, JSON.stringify({ app: "pachinko-slot-uranai-ledger", v: 1, exportedAt: new Date().toISOString(), entries: data.entries, fortunes: data.fortunes }, null, 1), "application/json");
+    download(`shushi-note-${stamp()}.json`, JSON.stringify({ app: "pachinko-slot-uranai-ledger", v: 1, exportedAt: new Date().toISOString(), entries: data.entries, fortunes: data.fortunes, del: data.del }, null, 1), "application/json");
     try { localStorage.setItem(EXPORT_KEY, String(Date.now())); } catch (e) { /* 記録できなくても書き出しは有効 */ }
     renderBackupNudge();
     msg("バックアップを書き出しました。ファイルは大切に保管してください（別の端末では「読み込む」で復元できます）。");
@@ -389,28 +423,236 @@
         const o = JSON.parse(String(reader.result));
         if (!o || o.app !== "pachinko-slot-uranai-ledger") throw new Error("形式が違います");
         const inc = sanitize(o);
-        const byId = new Map(data.entries.map((e) => [e.id, e]));
-        inc.entries.forEach((e) => byId.set(e.id, e));
-        data.entries = Array.from(byId.values());
-        Object.keys(inc.fortunes).forEach((d) => {
-          const cur = data.fortunes[d] || [];
-          const seen = new Set(cur.map((r) => r.t + r.kind));
-          inc.fortunes[d].forEach((r) => { if (!seen.has(r.t + r.kind)) cur.push(r); });
-          data.fortunes[d] = cur.sort((a, b) => a.t - b.t).slice(-MAX_FORTUNES_PER_DAY);
-        });
+        data = mergeData(data, inc);
         save(); renderAll();
-        msg(`${inc.entries.length}件の記録を読み込みました（同じ記録は上書き、それ以外は追加）。`);
+        msg(`${inc.entries.length}件の記録を読み込みました（同じ記録は新しい方を採用、それ以外は追加）。`);
       } catch (e) {
         msg("読み込めませんでした。このサイトで書き出したバックアップ（JSON）を選んでください。");
       }
     };
     reader.readAsText(file);
   });
-  el.clear.addEventListener("click", () => {
-    if (!confirm("収支の記録と占い履歴を、この端末からすべて削除します。元に戻せません。先にバックアップを書き出しましたか？")) return;
-    data = { v: 1, entries: [], fortunes: {} };
-    save(); resetForm(false); renderAll();
+  el.clear.addEventListener("click", async () => {
+    const cloud = !!sync;
+    if (!confirm(`収支の記録と占い履歴を、この端末からすべて削除します。${cloud ? "クラウド保存も解除し、クラウド上のデータも削除します。" : ""}元に戻せません。先にバックアップを書き出しましたか？`)) return;
+    if (cloud) await disableSync(true);
+    data = { v: 1, entries: [], fortunes: {}, del: {} };
+    save(); resetForm(false); renderAll(); renderSync();
     msg("すべて削除しました。");
+  });
+
+  /* ---------------- 引き継ぎコードによるクラウド保存（登録不要） ----------------
+     ・20文字のランダムな「引き継ぎコード」を端末で作る（サーバーには送らない）。
+     ・コードから「保存先ID（SHA-256）」と「暗号鍵（AES-GCM）」を作り、データを暗号化してから Supabase に預ける。
+       サーバー側には暗号文しか無く、運営者にも読めない。コードを失くすと誰にも復元できない。
+     ・別の端末では、同じコードを入力すると復元できる。以後は自動で同期（記録はIDごとに新しい方を採用）。
+     ・Supabaseの設定（votes-config.js）が空のあいだは、この機能は画面に出さない。 */
+  const SYNC_KEY = "pslab_sync_v1";
+  const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // 紛らわしい 0/O/1/I を除いた32文字
+  const syncBox = $("ledger-sync");
+  let sync = null;           // { code, last } 有効なとき
+  let syncing = false, syncQueued = false, syncTimer = null;
+  let syncStatusText = "", syncStatusErr = false, showingCode = false, issuing = null;
+
+  try { const s = JSON.parse(localStorage.getItem(SYNC_KEY) || "null"); if (s && /^[A-HJ-NP-Z2-9]{20}$/.test(s.code)) sync = { code: s.code, last: Number(s.last) || 0 }; } catch (e) { /* 無効 */ }
+  function saveSync() { try { if (sync) localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); else localStorage.removeItem(SYNC_KEY); } catch (e) { /* 保存不可 */ } }
+
+  function syncAvailable() {
+    return typeof VOTES_CONFIG !== "undefined" && !!(VOTES_CONFIG.mock || (VOTES_CONFIG.url && VOTES_CONFIG.key));
+  }
+  const textEnc = new TextEncoder(), textDec = new TextDecoder();
+  function b64(buf) {
+    const u = new Uint8Array(buf); let s = "";
+    for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function unb64(s) { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+  const hexOf = (buf) => Array.from(new Uint8Array(buf)).map((x) => x.toString(16).padStart(2, "0")).join("");
+  async function deriveIds(code) {
+    const id = hexOf(await crypto.subtle.digest("SHA-256", textEnc.encode("pslab-id:" + code)));
+    const raw = await crypto.subtle.digest("SHA-256", textEnc.encode("pslab-key:" + code));
+    const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+    return { id, key };
+  }
+  async function encryptData(key, obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, textEnc.encode(JSON.stringify(obj)));
+    return b64(iv) + "." + b64(ct);
+  }
+  async function decryptData(key, blob) {
+    const [a, b] = String(blob).split(".");
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(a) }, key, unb64(b));
+    return JSON.parse(textDec.decode(pt));
+  }
+  function newCode() {
+    const bytes = crypto.getRandomValues(new Uint8Array(20));
+    return Array.from(bytes).map((x) => CODE_ALPHABET[x & 31]).join("");   // 256は32で割り切れるので偏りなし
+  }
+  const showCode = (c) => c.match(/.{5}/g).join("-");
+  function parseCode(s) {
+    const c = String(s).toUpperCase().replace(/[\s\-ー－‐]/g, "");
+    return /^[A-HJ-NP-Z2-9]{20}$/.test(c) ? c : null;
+  }
+
+  /* --- サーバー（Supabase RPC）／ローカル検証用モック --- */
+  function mockStore() { try { return JSON.parse(localStorage.getItem("pslab_mocksync") || "{}"); } catch (e) { return {}; } }
+  function mockWrite(o) { localStorage.setItem("pslab_mocksync", JSON.stringify(o)); }
+  async function rpc(fn, body) {
+    const res = await fetch(`${VOTES_CONFIG.url}/rest/v1/rpc/${fn}`, { method: "POST", headers: Object.assign({}, votesHeaders(), { "Content-Type": "application/json" }), body: JSON.stringify(body) });
+    if (!res.ok) {
+      let m = ""; try { m = (await res.json()).message || ""; } catch (e) { /* 本文なし */ }
+      throw new Error(/conflict/.test(m) ? "conflict" : "rpc " + res.status);
+    }
+    const t = await res.text();
+    return t ? JSON.parse(t) : null;
+  }
+  async function remoteGet(id) {
+    if (VOTES_CONFIG.mock) return mockStore()[id] || null;
+    const rows = await rpc("ledger_get", { p_id: id });
+    return Array.isArray(rows) && rows.length ? rows[0] : null;
+  }
+  async function remotePut(id, blob, expected) {
+    if (VOTES_CONFIG.mock) {
+      const s = mockStore(); const cur = s[id];
+      if ((cur ? cur.version : 0) !== expected) throw new Error("conflict");
+      s[id] = { blob, version: expected + 1 }; mockWrite(s); return expected + 1;
+    }
+    return Number(await rpc("ledger_put", { p_id: id, p_blob: blob, p_expected: expected }));
+  }
+  async function remoteDelete(id) {
+    if (VOTES_CONFIG.mock) { const s = mockStore(); delete s[id]; mockWrite(s); return; }
+    await rpc("ledger_delete", { p_id: id });
+  }
+
+  function setSyncStatus(t, err) { syncStatusText = t; syncStatusErr = !!err; const n = $("sy-status"); if (n) { n.textContent = t; n.className = "sy-status" + (err ? " sy-err" : ""); } }
+  function fmtTime(t) { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+  // 手元とクラウドを統合して、変化があればクラウドへ書き戻す。restore=true は「コードが存在すること」を必須にする
+  async function syncNow(opts) {
+    opts = opts || {};
+    if (!sync || !syncAvailable()) return false;
+    if (syncing) { syncQueued = true; return false; }
+    syncing = true;
+    setSyncStatus("同期中…");
+    try {
+      const { id, key } = await deriveIds(sync.code);
+      let done = false;
+      for (let attempt = 0; attempt < 4 && !done; attempt++) {
+        const remote = await remoteGet(id);
+        let expected = 0, same = false;
+        if (remote) {
+          let rd;
+          try { rd = sanitize(await decryptData(key, remote.blob)); } catch (e) { const err = new Error("badcode"); err.badcode = true; throw err; }
+          const merged = mergeData(data, rd);
+          same = canon(merged) === canon(rd);
+          data = merged;
+          expected = Number(remote.version);
+        } else if (opts.restore) {
+          const err = new Error("notfound"); err.notfound = true; throw err;
+        }
+        persistLocal();
+        if (same) { done = true; break; }
+        try { await remotePut(id, await encryptData(key, data), expected); done = true; } catch (e) { if (e.message !== "conflict") throw e; }
+      }
+      if (!done) throw new Error("conflict-loop");
+      sync.last = Date.now(); saveSync();
+      renderAll();
+      setSyncStatus(`☁ 同期できました（${fmtTime(sync.last)}）`);
+      return true;
+    } catch (e) {
+      if (e.badcode) setSyncStatus("クラウドのデータをこのコードで開けませんでした。コードが違う可能性があります。", true);
+      else if (e.notfound) setSyncStatus("このコードのデータが見つかりませんでした。コードを確認してください。", true);
+      else setSyncStatus("同期できませんでした（通信エラーなど）。記録はこの端末には保存されています。あとで自動的に再試行します。", true);
+      e.syncError = true;
+      syncing = false;
+      return Promise.reject(e);
+    } finally {
+      syncing = false;
+      if (syncQueued) { syncQueued = false; scheduleSync(); }
+    }
+  }
+  function scheduleSync() {
+    if (!sync || !syncAvailable()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => { syncNow().catch(() => {}); }, 1500);
+  }
+  window.addEventListener("online", () => { if (sync) scheduleSync(); });
+
+  async function disableSync(deleteRemote) {
+    if (!sync) return true;
+    if (deleteRemote) {
+      try { const { id } = await deriveIds(sync.code); await remoteDelete(id); } catch (e) { setSyncStatus("クラウドのデータを削除できませんでした。通信状態を確認して、もう一度お試しください。", true); return false; }
+    }
+    sync = null; saveSync(); showingCode = false; issuing = null;
+    return true;
+  }
+
+  function renderSync() {
+    if (!syncBox) return;
+    if (!syncAvailable() || !window.crypto || !crypto.subtle) { syncBox.hidden = true; return; }
+    syncBox.hidden = false;
+    let html = `<h2>☁ 別の端末でも見られるようにする（引き継ぎコード）</h2>`;
+    if (sync) {
+      html += `<p class="calc-foot">クラウド保存：<b>有効</b>。記録を変えると自動で同期し、別の端末で同じコードを入力すると復元できます。内容は暗号化されて預けられ、運営者にも読めません。</p>
+        <p class="sy-status${syncStatusErr ? " sy-err" : ""}" id="sy-status" aria-live="polite">${escapeHTML(syncStatusText || (sync.last ? `☁ 最終同期 ${fmtTime(sync.last)}` : ""))}</p>
+        ${showingCode ? `<div class="sy-code" id="sy-code">${showCode(sync.code)}</div><p class="calc-foot">このコードが「鍵」です。失くすとデータを復元できず、運営者にも再発行できません。</p>` : ""}
+        <div class="ledger-tools">
+          <button type="button" class="btn-secondary" id="sy-now">いま同期する</button>
+          <button type="button" class="btn-secondary" id="sy-show">${showingCode ? "コードを隠す" : "引き継ぎコードを表示する"}</button>
+          ${showingCode ? `<button type="button" class="btn-secondary" id="sy-copy">コードをコピー</button>` : ""}
+          <button type="button" class="btn-secondary ledger-danger" id="sy-off">クラウド保存をやめる（クラウドのデータを削除）</button>
+        </div>`;
+    } else if (issuing) {
+      html += `<div class="sy-code" id="sy-code">${showCode(issuing)}</div>
+        <p class="ledger-warn-box">⚠ <b>このコードが「鍵」です。</b>スクリーンショットやメモで必ず控えてください。失くすとデータを復元できず、運営者にも再発行できません。</p>
+        <label class="sy-ack"><input type="checkbox" id="sy-ack"> 控えました</label>
+        <div class="ledger-tools">
+          <button type="button" class="btn-secondary" id="sy-copy">コードをコピー</button>
+          <button type="button" class="btn-primary" id="sy-enable" disabled>クラウド保存を有効にする</button>
+          <button type="button" class="link-btn" id="sy-cancel">やめる</button>
+        </div>
+        <p class="sy-status${syncStatusErr ? " sy-err" : ""}" id="sy-status" aria-live="polite">${escapeHTML(syncStatusText)}</p>`;
+    } else {
+      html += `<p class="calc-foot">登録・ログインは不要です。<b>引き継ぎコード</b>を発行すると、記録を暗号化してクラウドに預けられます（運営者にも内容は読めません）。機種変更・ブラウザのデータ削除・別の端末でも、コードを入れれば元通りになります。<b>コードを失くすと復元できません。</b></p>
+        <div class="ledger-tools">
+          <button type="button" class="btn-secondary" id="sy-issue">引き継ぎコードを発行して有効にする</button>
+        </div>
+        <div class="sy-restore">
+          <label for="sy-input">すでにコードを持っている方（別の端末のデータを復元）</label>
+          <input type="text" id="sy-input" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30">
+          <button type="button" class="btn-secondary" id="sy-restore">コードで復元する</button>
+        </div>
+        <p class="sy-status${syncStatusErr ? " sy-err" : ""}" id="sy-status" aria-live="polite">${escapeHTML(syncStatusText)}</p>`;
+    }
+    syncBox.innerHTML = html;
+  }
+
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) { return false; }
+  }
+  if (syncBox) syncBox.addEventListener("click", async (ev) => {
+    const id = ev.target.id;
+    if (id === "sy-issue") { issuing = newCode(); syncStatusText = ""; syncStatusErr = false; renderSync(); }
+    else if (id === "sy-cancel") { issuing = null; renderSync(); }
+    else if (id === "sy-ack") { $("sy-enable").disabled = !ev.target.checked; }
+    else if (id === "sy-copy") { const ok = await copyText(sync ? sync.code : issuing); setSyncStatus(ok ? "コードをコピーしました。メモ帳などに貼って控えてください。" : "コピーできませんでした。画面のコードを書き写すか、スクリーンショットで控えてください。", !ok); }
+    else if (id === "sy-enable") {
+      sync = { code: issuing, last: 0 }; issuing = null; saveSync(); renderSync();
+      track("ledger_sync", { action: "enable" });
+      syncNow().catch(() => {}).then(() => renderSync());
+    } else if (id === "sy-restore") {
+      const code = parseCode($("sy-input").value);
+      if (!code) { setSyncStatus("コードは英大文字と数字（0・1・O・I を除く）の20文字です。入力を確認してください。", true); return; }
+      sync = { code, last: 0 }; saveSync();
+      try { await syncNow({ restore: true }); track("ledger_sync", { action: "restore" }); } catch (e) { sync = null; saveSync(); }
+      renderSync();
+      if (sync) msg("復元しました。");
+    } else if (id === "sy-now") { syncNow().catch(() => {}); }
+    else if (id === "sy-show") { showingCode = !showingCode; renderSync(); }
+    else if (id === "sy-off") {
+      if (!confirm("クラウド保存をやめて、クラウド上のデータを削除します。この端末の記録は残ります。よろしいですか？")) return;
+      if (await disableSync(true)) { setSyncStatus(""); renderSync(); track("ledger_sync", { action: "disable" }); }
+    }
   });
 
   /* ---------------- 画面 ---------------- */
@@ -418,6 +660,8 @@
     el.date.max = todayStr();
     if (!editingId && !el.date.value) el.date.value = todayStr();
     updateTypeRows(); updateFormHints(); renderAll(); checkPersist();
+    renderSync();
+    if (sync) syncNow().catch(() => {}).then(() => renderSync());
     showScreen("ledger");
     track("ledger_view", {});
   }

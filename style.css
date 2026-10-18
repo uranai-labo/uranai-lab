@@ -914,3 +914,18 @@ body.menu-open{ overflow:hidden; }
 .ledger-persist[hidden], .ledger-backup[hidden]{ display:none; }
 .ledger-backup{ margin:12px 0 0; padding:10px 12px; border-radius:10px; background:#fff4e5; color:#8a5200; font-size:.8rem; line-height:1.7; }
 .ledger-backup .link-btn{ color:#8a5200; font-weight:700; }
+
+/* 引き継ぎコード（クラウド保存） */
+.ledger-sync[hidden]{ display:none; }
+.sy-code{
+  margin:10px 0; padding:14px 10px; text-align:center; border-radius:12px; background:#12071f; color:#ffe9a8;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:1.15rem; letter-spacing:.08em; font-weight:700;
+  user-select:all; overflow-wrap:anywhere;
+}
+.ledger-warn-box{ margin:8px 0; padding:10px 12px; border-radius:10px; background:#fff4e5; color:#8a5200; font-size:.8rem; line-height:1.7; }
+.sy-ack{ display:flex; align-items:center; gap:8px; margin:8px 0; font-size:.88rem; font-weight:700; }
+.sy-restore{ margin-top:14px; padding-top:12px; border-top:1px solid #f0e9fb; display:flex; flex-direction:column; gap:6px; font-size:.82rem; color:var(--text-muted); }
+.sy-restore input{ font-size:1rem; padding:11px 12px; border-radius:10px; border:2px solid #efe6ff; font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--text); text-transform:uppercase; }
+.sy-restore .btn-secondary{ padding:12px 16px; font-size:.88rem; margin-top:2px; }
+.sy-status{ margin:8px 0 0; font-size:.78rem; line-height:1.6; color:var(--text-muted); min-height:1.2em; }
+.sy-status.sy-err{ color:#c0213f; font-weight:700; }
