@@ -30,6 +30,9 @@ function votesEnabled() {
 }
 
 function votesHeaders() {
+  // 新形式の Publishable key（sb_publishable_…）は JWT ではないので apikey ヘッダーだけで送る。
+  // 旧形式の anon（JWT）キーなら Authorization にも付ける。
+  if (/^sb_/.test(VOTES_CONFIG.key)) return { apikey: VOTES_CONFIG.key };
   return { apikey: VOTES_CONFIG.key, Authorization: `Bearer ${VOTES_CONFIG.key}` };
 }
 
