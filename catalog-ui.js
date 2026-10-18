@@ -162,6 +162,7 @@ function normalizeSearch(s) {
       ${borderBlockHTML(it)}
       <div class="cat-block">${reviewBoxHTML(it.machine) || `<p class="calc-foot">この機種のDMMぱちタウンの口コミ情報はありません。</p>`}</div>
       <div class="cat-block" id="cat-vote"></div>
+      <div class="ad-slot" id="cat-ad" hidden></div>
       <div class="cat-actions">
         <button type="button" class="btn-primary" id="cat-to-ledger">📒 この機種で収支ノートに記録する</button>
       </div>
@@ -170,6 +171,9 @@ function normalizeSearch(s) {
     listView.hidden = true;
     detailView.hidden = false;
     renderVoteBox(document.getElementById("cat-vote"), it.machine);
+    const adEl = document.getElementById("cat-ad");
+    adEl.innerHTML = adSlotHTML("jacard", "クレジットカードを作るなら。新規入会キャンペーンの条件は公式サイトでご確認ください。", "catalog");
+    adEl.hidden = !adEl.innerHTML;
     detailView.querySelector("#cat-back").addEventListener("click", closeDetail);
     detailView.querySelector("#cat-to-ledger").addEventListener("click", () => {
       if (window.PS_LEDGER) window.PS_LEDGER.openWith(it.name, it.type);

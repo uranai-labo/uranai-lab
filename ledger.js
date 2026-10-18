@@ -661,6 +661,8 @@
     if (!editingId && !el.date.value) el.date.value = todayStr();
     updateTypeRows(); updateFormHints(); renderAll(); checkPersist();
     renderSync();
+    const adEl = $("ledger-ad");
+    if (adEl) { adEl.innerHTML = adSlotHTML("jacard", "軍資金の管理にも。クレジットカードの新規入会キャンペーンの条件は公式サイトでご確認ください。", "ledger"); adEl.hidden = !adEl.innerHTML; }
     if (sync) syncNow().catch(() => {}).then(() => renderSync());
     showScreen("ledger");
     track("ledger_view", {});

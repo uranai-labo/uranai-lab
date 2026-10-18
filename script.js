@@ -1357,6 +1357,11 @@ function adBlockHTML(items, placement) {
   return `<p class="ad-slot-label">PR</p>` + items.map(([key, lead]) => adItemHTML(key, lead, placement)).join("");
 }
 
+// 承認待ちなどで ADS にまだ無い広告は、何も表示しない（機種カタログ・収支ノートの枠で使う）
+function adSlotHTML(key, lead, placement) {
+  return ADS[key] ? adBlockHTML([[key, lead]], placement) : "";
+}
+
 function track(name, params) {
   if (typeof gtag === "function") gtag("event", name, params);
 }
