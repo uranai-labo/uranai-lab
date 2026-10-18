@@ -3,27 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>パチンコ・スロット占い | 今日のおすすめ台診断</title>
-<meta name="description" content="いくつかの質問に答えるだけで、今日打つべきパチンコ・スロットのジャンルと立ち回りのコツを診断。今日何を打とうか迷ったら、友達と行く前にチェック。">
+<title>パチンコ・スロット占い｜ボーダー計算機・機種カタログ・収支ノート</title>
+<meta name="description" content="パチンコ・スロットのボーダー計算機、機種カタログ、カレンダー式の収支ノートが無料・登録不要。ボーダーが甘い機種ランキングや、今日の一台を占う診断も。">
 
 <!-- OGP（X/LINE/Discordなどでリンクを共有したときのプレビュー用） -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://uranai-labo.github.io/uranai-lab/">
-<meta property="og:title" content="パチンコ・スロット占い | 今日のおすすめ台診断">
-<meta property="og:description" content="いくつかの質問に答えるだけで、今日打つべきパチンコ・スロットのジャンルと立ち回りのコツを診断。今日何を打とうか迷ったら、友達と行く前にチェック。">
+<meta property="og:title" content="パチンコ・スロット占い｜ボーダー計算機・機種カタログ・収支ノート">
+<meta property="og:description" content="ボーダー計算機、機種カタログ、カレンダー式の収支ノートが無料・登録不要。ボーダーが甘い機種ランキングや、今日の一台を占う診断も。">
 <meta property="og:image" content="https://uranai-labo.github.io/uranai-lab/images/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="パチンコ・スロット占い">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="パチンコ・スロット占い | 今日のおすすめ台診断">
-<meta name="twitter:description" content="いくつかの質問に答えるだけで、今日打つべきパチンコ・スロットのジャンルと立ち回りのコツを診断。">
+<meta name="twitter:title" content="パチンコ・スロット占い｜ボーダー計算機・機種カタログ・収支ノート">
+<meta name="twitter:description" content="ボーダー計算機、機種カタログ、収支ノートが無料・登録不要。今日の一台を占う診断も。">
 <meta name="twitter:image" content="https://uranai-labo.github.io/uranai-lab/images/og-image.jpg">
 
 <link rel="canonical" href="https://uranai-labo.github.io/uranai-lab/">
 <meta name="theme-color" content="#12071f">
 <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="パチ占い">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
 <script type="application/ld+json">
 {
@@ -36,7 +42,7 @@
       "applicationCategory": "EntertainmentApplication",
       "operatingSystem": "Any",
       "inLanguage": "ja",
-      "description": "いくつかの質問に答えるだけで、今日打つべきパチンコ・スロットのジャンルと実在の機種、運勢ランクを占う無料のエンタメ診断サイト。",
+      "description": "パチンコ・スロットのボーダー計算機、機種カタログ、カレンダー式の収支ノートが無料・登録不要で使え、今日の一台を占う診断もできる無料サイト。",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
     },
     {
@@ -88,7 +94,7 @@
     <span class="menu-btn-text">メニュー</span>
   </button>
   <div class="logo">🎰 パチンコ・スロット占い</div>
-  <p class="tagline">今日、何を打つ？が3分でわかる</p>
+  <p class="tagline">ボーダー・口コミ・収支ノート、そして占い</p>
 </header>
 
 <div class="menu-overlay" id="menu-overlay" hidden></div>
@@ -117,7 +123,21 @@
 
   <!-- INTRO -->
   <section id="screen-intro" class="screen active">
-    <div class="card">
+    <!-- ホーム：ツールのハブ（調べる・計算する・記録する）＋占い -->
+    <div class="card home-top">
+      <h1 class="home-title">パチンコ・スロットを、<br><span>調べる・計算する・記録する。</span></h1>
+      <p class="lead">機種ごとのボーダーと口コミ、期待値の計算、カレンダーの収支ノートが、すべて<b>無料・登録不要</b>。おまけの占いで、今日の一台も。</p>
+      <div class="tool-grid">
+        <button type="button" class="tool-tile" data-nav="ledger"><span class="tool-ico">📒</span><b>収支ノート</b><small>カレンダーで管理・貯玉も</small></button>
+        <button type="button" class="tool-tile" data-nav="calc"><span class="tool-ico">🧮</span><b>ボーダー計算機</b><small>回転数から期待値を計算</small></button>
+        <button type="button" class="tool-tile" data-nav="catalog"><span class="tool-ico">📚</span><b>機種カタログ</b><small>ボーダー・口コミ・投票</small></button>
+        <button type="button" class="tool-tile" data-nav="rank"><span class="tool-ico">📊</span><b>ボーダーランキング</b><small>甘い（低い）順に比較</small></button>
+        <button type="button" class="tool-tile" id="btn-goto-gamble"><span class="tool-ico">🔥</span><b>今日が勝負</b><small>生年月日と名前で占う</small></button>
+        <button type="button" class="tool-tile" data-nav="amida"><span class="tool-ico">🪢</span><b>あみだくじ</b><small>線は自分で引く</small></button>
+      </div>
+    </div>
+
+    <div class="card home-card">
       <div class="character-intro">
         <div class="character-avatar"><img src="images/roto-san.webp" alt="占い師ロトさん"></div>
         <div class="character-bubble">
@@ -125,21 +145,24 @@
           <p class="character-line">若い頃から全国のホールに入り浸り、気づけば「勘」だけで飯を食えるようになった自称・的中率No.1の占い師じゃ。今日のお前さんにピッタリの一台、ワシが占ってやるぞ。</p>
         </div>
       </div>
-      <h1>今日のあなたにピッタリの一台を占います</h1>
-      <p class="lead">パチンコ・スロット、気分、血液型、星座など、たくさんの質問の中から毎回ランダムに出題される診断で、今日全国のホールで狙うべき実在の機種を占います。<br>友達と行く前の話のタネにもどうぞ。</p>
+      <h2 class="home-h2">今日のあなたにピッタリの一台を占います</h2>
+      <p class="lead">パチンコ・スロット、気分、血液型、星座など、たくさんの質問の中から毎回ランダムに出題される診断で、今日全国のホールで狙うべき実在の機種を占います。友達と行く前の話のタネにもどうぞ。</p>
       <button class="btn-primary" id="btn-start">占いを始める（無料・登録不要）</button>
       <p class="note">※本診断はエンタメ目的です。当たり・出玉を保証するものではありません。</p>
-      <div class="alt-links">
-        <button class="link-btn" id="btn-goto-gamble">🔥 今日が勝負の方はこちら</button>
-      </div>
-      <div class="alt-links">
-        <button class="link-btn" data-nav="calc">🧮 ボーダー計算機</button>
-        <button class="link-btn" data-nav="rank">📊 ボーダーが甘い機種ランキング</button>
-      </div>
-      <div class="alt-links">
-        <button class="link-btn" data-nav="catalog">📚 機種カタログ</button>
-        <button class="link-btn" data-nav="ledger">📒 収支ノート</button>
-      </div>
+    </div>
+
+    <div class="card home-card">
+      <h2 class="home-h2">📊 ボーダーが甘い台 TOP3</h2>
+      <p class="home-sub">1,000円あたりの回転数（等価）が低い順。低いほど、少ない回転数でもプラスになりやすい台です。</p>
+      <ol class="home-top3" id="home-top3"></ol>
+      <p class="calc-foot" id="home-top3-note"></p>
+      <button type="button" class="btn-secondary" data-nav="rank">ランキングをすべて見る</button>
+    </div>
+
+    <div class="card home-card" id="install-box" hidden></div>
+
+    <div class="card home-card home-ad">
+      <div class="ad-slot" id="home-ad"></div>
     </div>
   </section>
 
@@ -340,6 +363,7 @@
           <li>1円パチンコ・4.3円貸し・スロットには対応していません。</li>
         </ul>
       </div>
+      <div class="ad-slot" id="calc-ad"></div>
     </div>
   </section>
 
@@ -367,6 +391,7 @@
         </ul>
         <p class="rank-nodata" id="rank-nodata"></p>
       </div>
+      <div class="ad-slot" id="rank-ad"></div>
     </div>
   </section>
 
@@ -462,6 +487,29 @@
         <button type="button" class="btn-secondary" id="lg-cancel" hidden>編集をやめる</button>
       </form>
 
+      <details class="pool-box" id="pool-box">
+        <summary><b>💰 貯玉・貯メダル</b><span class="pool-total" id="pool-total"></span></summary>
+        <p class="calc-foot">ホールに預けている玉・メダルの残高を、店舗ごとに記録します。収支ノートの「回収」には、<b>換金した分だけ</b>を入れてください（貯玉は別の資産として管理します）。</p>
+        <div id="pool-list"></div>
+        <form id="pool-form" class="calc-form" autocomplete="off" novalidate>
+          <h3 class="cat-sub">貯玉・貯メダルを追加</h3>
+          <label>ホール名
+            <input type="text" id="pool-hall" maxlength="40" placeholder="例：○○ホール 駅前店">
+          </label>
+          <label>種類
+            <select id="pool-kind"><option value="ball">貯玉（パチンコ）</option><option value="medal">貯メダル（スロット）</option></select>
+          </label>
+          <label>いまの残高（<span id="pool-unit-label">玉</span>）
+            <input type="number" id="pool-balance" inputmode="numeric" min="0" max="999999999" step="1" placeholder="例：12000">
+          </label>
+          <label>1<span id="pool-unit-label2">玉</span>あたりの円（換金価値の目安）
+            <input type="number" id="pool-yen" inputmode="decimal" min="0.1" max="100" step="0.1" value="4">
+          </label>
+          <p class="calc-error" id="pool-error" hidden></p>
+          <button type="submit" class="btn-secondary">追加する</button>
+        </form>
+      </details>
+
       <h2>記録一覧</h2>
       <div id="ledger-list"></div>
 
@@ -535,5 +583,6 @@
 <script src="border-tools.js"></script>
 <script src="catalog-ui.js"></script>
 <script src="ledger.js"></script>
+<script src="home.js"></script>
 </body>
 </html>

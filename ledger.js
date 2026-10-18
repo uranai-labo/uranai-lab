@@ -24,7 +24,7 @@
   const BACKUP_NUDGE_DAYS = 14;
 
   /* ---------------- 保存 ---------------- */
-  let data = { v: 1, entries: [], fortunes: {}, del: {} };
+  let data = { v: 1, entries: [], fortunes: {}, del: {}, pools: [] };
   let storageOk = true;
   let editingId = null;
 
@@ -34,7 +34,7 @@
 
   // 読み込んだ／取り込んだデータを検証して、想定した形のものだけ残す
   function sanitize(o) {
-    const out = { v: 1, entries: [], fortunes: {}, del: {} };
+    const out = { v: 1, entries: [], fortunes: {}, del: {}, pools: [] };
     if (!o || typeof o !== "object") return out;
     // 削除済みの記録（端末をまたいだ同期で、消した記録が復活しないための印）
     if (o.del && typeof o.del === "object") {
@@ -56,6 +56,22 @@
         u: Number.isFinite(Number(e.u)) && Number(e.u) > 0 ? Number(e.u) : 0,   // 最終更新時刻（同期でどちらが新しいか決める）
       });
     });
+    // 貯玉・貯メダル
+    (Array.isArray(o.pools) ? o.pools : []).slice(0, 200).forEach((p) => {
+      if (!p) return;
+      const balance = intIn(p.balance, 0, 999999999);
+      const yenPer = Number(p.yenPer);
+      if (balance == null || !Number.isFinite(yenPer) || yenPer < 0.1 || yenPer > 100) return;
+      out.pools.push({
+        id: clampStr(p.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)), 40),
+        kind: p.kind === "medal" ? "medal" : "ball",
+        hall: clampStr(p.hall, 40),
+        balance, yenPer,
+        log: (Array.isArray(p.log) ? p.log : []).filter((l) => l && isDate(l.d) && Number.isInteger(Number(l.delta))).slice(-100)
+          .map((l) => ({ d: l.d, delta: Number(l.delta), memo: clampStr(l.memo, 40) })),
+        u: Number.isFinite(Number(p.u)) && Number(p.u) > 0 ? Number(p.u) : 0,
+      });
+    });
     const f = o.fortunes && typeof o.fortunes === "object" ? o.fortunes : {};
     Object.keys(f).forEach((d) => {
       if (!isDate(d) || !Array.isArray(f[d])) return;
@@ -72,12 +88,15 @@
   // 2つのデータを統合する（端末間の同期・バックアップの読み込み用）。記録はIDごとに新しい方を採用し、
   // 削除の印が新しければ削除、占い履歴は和集合。
   function mergeData(a, b) {
-    const out = { v: 1, entries: [], fortunes: {}, del: {} };
+    const out = { v: 1, entries: [], fortunes: {}, del: {}, pools: [] };
     const del = Object.assign({}, a.del);
     Object.keys(b.del || {}).forEach((k) => { del[k] = Math.max(del[k] || 0, b.del[k]); });
     const map = new Map();
     a.entries.concat(b.entries).forEach((e) => { const cur = map.get(e.id); if (!cur || e.u > cur.u) map.set(e.id, e); });
     map.forEach((e, id) => { if (!(del[id] && del[id] >= e.u)) out.entries.push(e); });
+    const pm = new Map();
+    (a.pools || []).concat(b.pools || []).forEach((p) => { const cur = pm.get(p.id); if (!cur || p.u > cur.u) pm.set(p.id, p); });
+    pm.forEach((p, id) => { if (!(del[id] && del[id] >= p.u)) out.pools.push(p); });
     const cutoff = Date.now() - 400 * 86400000;
     Object.keys(del).forEach((k) => { if (del[k] > cutoff) out.del[k] = del[k]; });
     new Set(Object.keys(a.fortunes).concat(Object.keys(b.fortunes))).forEach((d) => {
@@ -90,7 +109,7 @@
   }
   // 内容が同じか比べるための並び替え済み文字列
   function canon(d) {
-    return JSON.stringify([d.entries.slice().sort((x, y) => (x.id < y.id ? -1 : 1)), Object.keys(d.fortunes).sort().map((k) => [k, d.fortunes[k]]), Object.keys(d.del).sort().map((k) => [k, d.del[k]])]);
+    return JSON.stringify([d.entries.slice().sort((x, y) => (x.id < y.id ? -1 : 1)), d.pools.slice().sort((x, y) => (x.id < y.id ? -1 : 1)), Object.keys(d.fortunes).sort().map((k) => [k, d.fortunes[k]]), Object.keys(d.del).sort().map((k) => [k, d.del[k]])]);
   }
 
   function load() {
@@ -378,8 +397,86 @@
 
   function renderAll() {
     el.warn.hidden = storageOk;
-    renderSummary(); renderCalendar(); renderDay(); renderList(); renderFortunes(); renderInsight(); renderBackupNudge();
+    renderSummary(); renderCalendar(); renderDay(); renderPools(); renderList(); renderFortunes(); renderInsight(); renderBackupNudge();
   }
+
+  /* ---------------- 貯玉・貯メダル ----------------
+     ホールに預けている残高を店舗ごとに記録する（収支ノートの収支とは別の資産として管理）。
+     評価額 = 残高 × 1個あたりの円（利用者が入力する換金価値の目安）。 */
+  const poolEl = { list: $("pool-list"), total: $("pool-total"), form: $("pool-form"), hall: $("pool-hall"), kind: $("pool-kind"), balance: $("pool-balance"), yen: $("pool-yen"), error: $("pool-error"), u1: $("pool-unit-label"), u2: $("pool-unit-label2") };
+  const unitOf = (k) => (k === "medal" ? "枚" : "玉");
+  const num = (n) => Number(n).toLocaleString("ja-JP");
+
+  function renderPools() {
+    if (!poolEl.list) return;
+    const ps = data.pools.slice().sort((a, b) => (a.hall < b.hall ? -1 : a.hall > b.hall ? 1 : 0));
+    const totalYen = ps.reduce((a, p) => a + Math.round(p.balance * p.yenPer), 0);
+    poolEl.total.textContent = ps.length ? `評価額 約${num(totalYen)}円` : "";
+    poolEl.list.innerHTML = ps.map((p) => {
+      const u = unitOf(p.kind);
+      const logs = p.log.slice(-5).reverse().map((l) => `<li>${fmtDay(l.d)} <b class="${l.delta >= 0 ? "plus" : "minus"}">${l.delta >= 0 ? "+" : "−"}${num(Math.abs(l.delta))}${u}</b>${l.memo ? ` ${escapeHTML(l.memo)}` : ""}</li>`).join("");
+      return `<div class="pool-card" data-pid="${escapeHTML(p.id)}">
+        <div class="pool-head"><span class="cat-chip">${p.kind === "medal" ? "貯メダル" : "貯玉"}</span> <b>${escapeHTML(p.hall || "（ホール名なし）")}</b></div>
+        <div class="pool-bal"><b>${num(p.balance)}</b>${u}<small>評価額 約${num(Math.round(p.balance * p.yenPer))}円（1${u}=${p.yenPer}円）</small></div>
+        <div class="pool-ops">
+          <input type="number" class="pool-qty" inputmode="numeric" min="0" max="999999999" step="1" placeholder="数量（${u}）" aria-label="数量">
+          <button type="button" class="btn-secondary" data-pact="plus">＋預ける</button>
+          <button type="button" class="btn-secondary" data-pact="minus">−使う・引き出す</button>
+          <button type="button" class="btn-secondary" data-pact="set">残高をこの数に合わせる</button>
+        </div>
+        ${logs ? `<ul class="pool-log">${logs}</ul>` : ""}
+        <button type="button" class="link-btn" data-pact="del">この貯玉・貯メダルを削除</button>
+      </div>`;
+    }).join("") || `<p class="rank-empty">まだ登録がありません。下のフォームから追加できます。</p>`;
+  }
+
+  poolEl.kind.addEventListener("change", () => {
+    const m = poolEl.kind.value === "medal";
+    poolEl.yen.value = m ? 20 : 4;
+    poolEl.u1.textContent = poolEl.u2.textContent = unitOf(poolEl.kind.value);
+  });
+  poolEl.form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    poolEl.error.hidden = true;
+    const hall = poolEl.hall.value.trim();
+    const bal = poolEl.balance.value === "" ? 0 : intIn(poolEl.balance.value, 0, 999999999);
+    const yenPer = Number(poolEl.yen.value);
+    const fail = (m) => { poolEl.error.textContent = m; poolEl.error.hidden = false; };
+    if (!hall) return fail("ホール名を入力してください。");
+    if (bal == null) return fail("残高は0以上の整数で入力してください。");
+    if (!Number.isFinite(yenPer) || yenPer < 0.1 || yenPer > 100) return fail("1個あたりの円は0.1〜100の範囲で入力してください。");
+    const p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), kind: poolEl.kind.value, hall: clampStr(hall, 40), balance: bal, yenPer, log: bal ? [{ d: todayStr(), delta: bal, memo: "初期残高" }] : [], u: Date.now() };
+    data.pools.push(p);
+    save(); track("pool_add", { kind: p.kind });
+    poolEl.hall.value = ""; poolEl.balance.value = "";
+    renderPools();
+  });
+  poolEl.list.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-pact]");
+    if (!btn) return;
+    const card = btn.closest(".pool-card");
+    const p = data.pools.find((x) => x.id === card.dataset.pid);
+    if (!p) return;
+    const act = btn.dataset.pact;
+    if (act === "del") {
+      if (!confirm(`「${p.hall}」の${p.kind === "medal" ? "貯メダル" : "貯玉"}の記録を削除しますか？（元に戻せません）`)) return;
+      data.pools = data.pools.filter((x) => x.id !== p.id);
+      data.del[p.id] = Date.now();
+      save(); renderPools();
+      return;
+    }
+    const q = intIn(card.querySelector(".pool-qty").value, 0, 999999999);
+    if (q == null || card.querySelector(".pool-qty").value === "") { card.querySelector(".pool-qty").focus(); return; }
+    let delta;
+    if (act === "plus") delta = q;
+    else if (act === "minus") { if (q > p.balance) { alert(`残高（${num(p.balance)}${unitOf(p.kind)}）より多くは引き出せません。`); return; } delta = -q; }
+    else delta = q - p.balance;           // 残高を合わせる
+    if (delta === 0) return;
+    p.balance += delta;
+    p.log = p.log.concat([{ d: todayStr(), delta, memo: act === "set" ? "残高を修正" : act === "plus" ? "預け入れ" : "使用・引き出し" }]).slice(-100);
+    p.u = Date.now();
+    save(); renderPools();
+  });
 
   /* ---------------- フォーム ---------------- */
   function updateFormHints() {
@@ -522,7 +619,7 @@
   function msg(t) { el.toolsMsg.textContent = t; }
 
   el.exportJson.addEventListener("click", () => {
-    download(`shushi-note-${stamp()}.json`, JSON.stringify({ app: "pachinko-slot-uranai-ledger", v: 1, exportedAt: new Date().toISOString(), entries: data.entries, fortunes: data.fortunes, del: data.del }, null, 1), "application/json");
+    download(`shushi-note-${stamp()}.json`, JSON.stringify({ app: "pachinko-slot-uranai-ledger", v: 1, exportedAt: new Date().toISOString(), entries: data.entries, fortunes: data.fortunes, del: data.del, pools: data.pools }, null, 1), "application/json");
     try { localStorage.setItem(EXPORT_KEY, String(Date.now())); } catch (e) { /* 記録できなくても書き出しは有効 */ }
     renderBackupNudge();
     msg("バックアップを書き出しました。ファイルは大切に保管してください（別の端末では「読み込む」で復元できます）。");
@@ -564,7 +661,7 @@
     const cloud = !!sync;
     if (!confirm(`収支の記録と占い履歴を、この端末からすべて削除します。${cloud ? "クラウド保存も解除し、クラウド上のデータも削除します。" : ""}元に戻せません。先にバックアップを書き出しましたか？`)) return;
     if (cloud) await disableSync(true);
-    data = { v: 1, entries: [], fortunes: {}, del: {} };
+    data = { v: 1, entries: [], fortunes: {}, del: {}, pools: [] };
     save(); resetForm(false); renderAll(); renderSync();
     msg("すべて削除しました。");
   });

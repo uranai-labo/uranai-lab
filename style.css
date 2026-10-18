@@ -979,3 +979,43 @@ details.ledger-notice[open] > summary{ margin-bottom:6px; }
 .cal-day .lg-entry{ background:#fff; }
 .cal-day .lg-fortune{ margin-bottom:8px; }
 .cal-day .lg-fortune b{ display:block; font-size:.7rem; color:var(--text-muted); }
+
+/* ---------------- ホーム（ツールのハブ） ---------------- */
+#screen-intro .card + .card{ margin-top:14px; }
+.home-title{ margin:0 0 10px; font-size:1.3rem; line-height:1.55; }
+.home-title span{ color:var(--accent-3); }
+.home-h2{ margin:0 0 8px; font-size:1.02rem; line-height:1.5; }
+.home-sub{ margin:0 0 10px; font-size:.78rem; line-height:1.7; color:var(--text-muted); }
+.tool-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+.tool-tile{
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left;
+  padding:14px 12px; border:1px solid #efe6ff; border-radius:14px; background:#faf8ff; color:var(--text);
+  font-family:inherit; cursor:pointer;
+}
+.tool-tile:hover, .tool-tile:focus-visible{ border-color:var(--accent-3); background:#f4eeff; outline:none; }
+.tool-tile:active{ transform:scale(.98); }
+.tool-ico{ font-size:1.5rem; line-height:1.2; }
+.tool-tile b{ font-size:.9rem; margin-top:4px; }
+.tool-tile small{ font-size:.68rem; line-height:1.5; color:var(--text-muted); }
+.home-top3{ list-style:none; margin:0 0 6px; padding:0; }
+.home-top3-item{ display:flex; align-items:center; gap:10px; padding:10px 2px; border-bottom:1px solid #f0e9fb; }
+.home-top3-item .link-btn{ padding:0; font-size:.72rem; }
+.home-card .btn-secondary{ margin-top:10px; }
+.home-ad .ad-slot{ margin:0; }
+
+/* ---------------- 貯玉・貯メダル ---------------- */
+.pool-box{ margin-top:16px; padding:12px 14px; border-radius:14px; background:#faf8ff; border:1px solid #efe6ff; }
+.pool-box > summary{ cursor:pointer; display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:.95rem; }
+.pool-total{ font-size:.78rem; color:var(--text-muted); font-weight:700; }
+.pool-card{ margin:10px 0; padding:12px; border-radius:12px; background:#fff; border:1px solid #efe6ff; }
+.pool-head{ font-size:.88rem; line-height:1.6; overflow-wrap:anywhere; }
+.pool-bal{ margin:4px 0 8px; }
+.pool-bal b{ font-size:1.5rem; }
+.pool-bal small{ display:block; font-size:.7rem; color:var(--text-muted); }
+.pool-ops{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.pool-ops .pool-qty{ grid-column:1 / -1; font-size:1rem; padding:10px 12px; border-radius:10px; border:2px solid #efe6ff; font-family:inherit; }
+.pool-ops .btn-secondary{ margin-top:0; padding:10px 8px; font-size:.78rem; }
+.pool-ops .btn-secondary:last-child{ grid-column:1 / -1; }
+.pool-log{ margin:8px 0 0; padding-left:1.1em; font-size:.72rem; line-height:1.7; color:var(--text-muted); }
+.pool-card > .link-btn{ margin-top:6px; padding:0; font-size:.72rem; color:var(--text-muted); }
+.pool-box .calc-form{ margin-top:10px; }
