@@ -18,8 +18,10 @@
     memo: $("lg-memo"), diff: $("lg-diff"), error: $("lg-error"), submit: $("lg-submit"), cancel: $("lg-cancel"),
     list: $("ledger-list"), fortunes: $("ledger-fortunes"), insight: $("ledger-insight"),
     exportJson: $("lg-export-json"), exportCsv: $("lg-export-csv"), importBtn: $("lg-import"), importFile: $("lg-import-file"),
-    clear: $("lg-clear"), toolsMsg: $("lg-tools-msg"),
+    clear: $("lg-clear"), toolsMsg: $("lg-tools-msg"), backup: $("ledger-backup"), persist: $("ledger-persist"),
   };
+  const EXPORT_KEY = "pslab_last_export";
+  const BACKUP_NUDGE_DAYS = 14;
 
   /* ---------------- 保存 ---------------- */
   let data = { v: 1, entries: [], fortunes: {} };
@@ -72,6 +74,42 @@
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(data)); storageOk = true; } catch (e) { storageOk = false; }
     el.warn.hidden = storageOk;
+    requestPersist();
+  }
+
+  // ブラウザに「容量不足でも自動削除しない保存領域」を頼む（許可されれば、ブラウザが勝手に消しにくくなる。
+  // ユーザーが手動で閲覧データを消した場合や別端末までは守れない）
+  let persistAsked = false;
+  function showPersist(granted) {
+    el.persist.hidden = false;
+    el.persist.innerHTML = granted
+      ? "✅ このブラウザに「自動で消さない保存領域」を許可してもらっています。"
+      : "ℹ️ 「自動で消さない保存領域」はまだ許可されていません（ブラウザの判断で、使い続けると許可されることがあります）。バックアップの併用をおすすめします。";
+  }
+  function requestPersist() {
+    if (!navigator.storage || !navigator.storage.persist) return;
+    const done = (g) => showPersist(!!g);
+    if (persistAsked) return;
+    persistAsked = true;
+    navigator.storage.persisted().then((p) => (p ? done(true) : navigator.storage.persist().then(done))).catch(() => {});
+  }
+  function checkPersist() {
+    if (!navigator.storage || !navigator.storage.persisted) return;
+    navigator.storage.persisted().then((p) => { if (p || data.entries.length) showPersist(p); }).catch(() => {});
+  }
+
+  // バックアップの催促：記録があるのに、書き出しが一度も無い／14日以上前のとき
+  function lastExportTime() { try { return Number(localStorage.getItem(EXPORT_KEY)) || 0; } catch (e) { return 0; } }
+  function renderBackupNudge() {
+    if (!data.entries.length) { el.backup.hidden = true; return; }
+    const t = lastExportTime();
+    const days = t ? Math.floor((Date.now() - t) / 86400000) : null;
+    if (t && days < BACKUP_NUDGE_DAYS) { el.backup.hidden = true; return; }
+    el.backup.hidden = false;
+    el.backup.innerHTML = t
+      ? `💾 最後のバックアップから${days}日たっています。<button type="button" class="link-btn" id="lg-nudge-export">いま書き出す</button>`
+      : `💾 バックアップがまだありません（記録${data.entries.length}件）。端末の故障やデータ削除に備えて、<button type="button" class="link-btn" id="lg-nudge-export">いま書き出す</button>`;
+    $("lg-nudge-export").addEventListener("click", () => el.exportJson.click());
   }
 
   /* ---------------- 日付・表示 ---------------- */
@@ -183,7 +221,7 @@
 
   function renderAll() {
     el.warn.hidden = storageOk;
-    renderSummary(); renderList(); renderFortunes(); renderInsight();
+    renderSummary(); renderList(); renderFortunes(); renderInsight(); renderBackupNudge();
   }
 
   /* ---------------- フォーム ---------------- */
@@ -323,6 +361,8 @@
 
   el.exportJson.addEventListener("click", () => {
     download(`shushi-note-${stamp()}.json`, JSON.stringify({ app: "pachinko-slot-uranai-ledger", v: 1, exportedAt: new Date().toISOString(), entries: data.entries, fortunes: data.fortunes }, null, 1), "application/json");
+    try { localStorage.setItem(EXPORT_KEY, String(Date.now())); } catch (e) { /* 記録できなくても書き出しは有効 */ }
+    renderBackupNudge();
     msg("バックアップを書き出しました。ファイルは大切に保管してください（別の端末では「読み込む」で復元できます）。");
     track("ledger_export", { kind: "json" });
   });
@@ -377,7 +417,7 @@
   function openLedger() {
     el.date.max = todayStr();
     if (!editingId && !el.date.value) el.date.value = todayStr();
-    updateTypeRows(); updateFormHints(); renderAll();
+    updateTypeRows(); updateFormHints(); renderAll(); checkPersist();
     showScreen("ledger");
     track("ledger_view", {});
   }
