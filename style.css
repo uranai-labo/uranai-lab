@@ -930,3 +930,52 @@ body.menu-open{ overflow:hidden; }
 .sy-status{ margin:8px 0 0; font-size:.78rem; line-height:1.6; color:var(--text-muted); min-height:1.2em; }
 .sy-status.sy-err{ color:#c0213f; font-weight:700; }
 .ad-slot[hidden]{ display:none; }
+
+/* ---------------- 収支カレンダー ---------------- */
+#screen-ledger .plus{ color:#1d6fd8; }
+#screen-ledger .minus{ color:#d6303e; }
+details.ledger-notice > summary{ cursor:pointer; list-style:none; }
+details.ledger-notice > summary::-webkit-details-marker{ display:none; }
+details.ledger-notice[open] > summary{ margin-bottom:6px; }
+.lg-notice-lead{ margin:0; }
+.cal{ margin-top:14px; border-radius:14px; overflow:hidden; border:1px solid #efe6ff; background:#fff; }
+.cal-head{ display:flex; align-items:center; justify-content:space-between; padding:10px 8px; background:#ffcf4a; color:#3a2a00; }
+.cal-title{ flex:1; border:none; background:none; font-family:inherit; font-size:1.05rem; font-weight:700; color:inherit; cursor:pointer; padding:6px; }
+.cal-nav{ width:40px; height:36px; border:none; border-radius:10px; background:rgba(255,255,255,.55); color:#3a2a00; font-size:1.4rem; line-height:1; cursor:pointer; }
+.cal-nav:disabled{ opacity:.3; cursor:default; }
+.cal-week{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:.7rem; color:var(--text-muted); padding:6px 0 2px; }
+.cal-week .sun{ color:#d6303e; } .cal-week .sat{ color:#1d6fd8; }
+.cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); padding:0 2px 4px; }
+.cal-cell{
+  position:relative; min-height:54px; padding:4px 1px 2px; border:none; background:none; border-radius:10px;
+  display:flex; flex-direction:column; align-items:center; gap:2px; font-family:inherit; color:var(--text); cursor:pointer;
+}
+.cal-cell.cal-empty{ cursor:default; }
+.cal-cell:disabled{ cursor:default; color:#b9aecb; }
+.cal-num{ font-size:.92rem; line-height:1.4; }
+.cal-amt{ font-size:.62rem; font-weight:700; line-height:1.2; white-space:nowrap; letter-spacing:-.02em; }
+.cal-cell.is-today{ background:#f1ecf5; }
+.cal-cell.is-today .cal-num{ color:#e8890c; font-weight:700; }
+.cal-cell.is-sel{ outline:2px solid var(--accent-3); outline-offset:-2px; }
+.cal-dot{ position:absolute; top:5px; right:7px; width:5px; height:5px; border-radius:50%; background:var(--accent-3); opacity:.6; }
+.cal-total-wrap{ text-align:center; padding:6px 0 10px; }
+.cal-total{ display:inline-block; padding:8px 18px; border-radius:999px; background:#fff; box-shadow:0 4px 14px rgba(36,24,51,.18); font-size:.95rem; font-weight:700; }
+.cal-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; padding:0 8px 12px; text-align:center; }
+.cal-stats:empty{ display:none; }
+.cal-stats small{ display:block; font-size:.6rem; color:var(--text-muted); }
+.cal-stats b{ display:block; font-size:.78rem; }
+.cal-stat-wide{ grid-column:1 / -1; margin-top:4px; padding:8px; border-radius:10px; background:#faf5ff; }
+.cal-stat-wide span{ display:block; margin-top:2px; font-size:.7rem; color:var(--text-muted); }
+.cal-stat-wide span b{ display:inline; font-size:.74rem; }
+.cal-day{ margin-top:12px; padding:12px; border-radius:14px; background:#f6f3f9; }
+.cal-day-head{ display:flex; justify-content:space-between; align-items:baseline; font-size:.88rem; margin-bottom:8px; }
+.cal-day-head span{ font-weight:700; }
+.cal-add{ display:block; width:100%; margin-top:6px; padding:12px; border:2px dashed #cdbff0; border-radius:12px; background:#fff; color:var(--accent-3); font-family:inherit; font-size:.9rem; font-weight:700; cursor:pointer; }
+.lg-cols{ display:grid; grid-template-columns:repeat(3,auto) 1fr; gap:8px 12px; align-items:end; margin-top:6px; }
+.lg-cols small{ display:block; font-size:.6rem; color:var(--text-muted); }
+.lg-cols b{ display:block; font-size:.8rem; }
+.lg-big{ text-align:right; font-size:1.1rem; font-weight:700; white-space:nowrap; }
+.lg-ev{ margin-top:6px; padding:6px 8px; border-radius:8px; background:#eef5ff; font-size:.72rem; line-height:1.6; }
+.cal-day .lg-entry{ background:#fff; }
+.cal-day .lg-fortune{ margin-bottom:8px; }
+.cal-day .lg-fortune b{ display:block; font-size:.7rem; color:var(--text-muted); }

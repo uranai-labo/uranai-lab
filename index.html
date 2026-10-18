@@ -397,8 +397,9 @@
       <button class="step-back" data-nav="intro">← トップに戻る</button>
       <h1>📒 収支ノート</h1>
       <p class="lead">打った日の収支をメモしておく、無料のノートです。登録・ログインは要りません。その日の占い結果も自動で一緒に残ります。</p>
-      <div class="ledger-notice">
-        <b>🔒 データはこのブラウザの中だけに保存されます。</b>
+      <details class="ledger-notice">
+        <summary><b>🔒 データの保存について（タップで開く）</b></summary>
+        <p class="lg-notice-lead"><b>データは、まずこのブラウザの中に保存されます。</b></p>
         <ul>
           <li>サーバーには送信しません。当サイト運営者にも見えません。</li>
           <li>日付が変わっても消えません。ただし<b>ブラウザの閲覧データ削除・プライベートモード・機種変更・別の端末</b>では引き継がれません。iPhoneのSafariは、長期間サイトを開かないと自動で消えることがあります。</li>
@@ -406,9 +407,24 @@
         </ul>
         <p class="ledger-persist" id="ledger-persist" hidden></p>
         <p class="ledger-warn" id="ledger-warn" hidden>⚠ このブラウザでは保存ができない設定になっています（プライベートモード等）。記録は閉じると消えます。</p>
-      </div>
+      </details>
 
       <p class="ledger-backup" id="ledger-backup" hidden></p>
+
+      <div class="cal" id="lg-cal">
+        <div class="cal-head">
+          <button type="button" class="cal-nav" id="cal-prev" aria-label="前の月">‹</button>
+          <button type="button" class="cal-title" id="cal-title" aria-label="今月に戻る"></button>
+          <button type="button" class="cal-nav" id="cal-next" aria-label="次の月">›</button>
+        </div>
+        <div class="cal-week" aria-hidden="true"><span class="sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="sat">土</span></div>
+        <div class="cal-grid" id="cal-grid" role="grid" aria-label="月間カレンダー"></div>
+        <div class="cal-total-wrap"><span class="cal-total" id="cal-total" aria-live="polite"></span></div>
+        <div class="cal-stats" id="cal-stats"></div>
+      </div>
+
+      <div class="cal-day" id="cal-day"></div>
+
       <div class="ledger-summary" id="ledger-summary"></div>
 
       <h2 id="ledger-form-title">記録を追加</h2>

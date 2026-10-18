@@ -210,19 +210,143 @@
         const t = monthTotals[m];
         html += `<h3 class="lg-month">${Number(m.slice(0, 4))}年${Number(m.slice(5))}月<small>${t.n}回／<b class="${cls(t.s)}">${signedYen(t.s)}</b></small></h3>`;
       }
-      const b = balance(e);
-      const fl = fortuneLines(e.date, 2);
-      html += `<div class="lg-entry" data-id="${escapeHTML(e.id)}">
-        <div class="lg-top"><span class="lg-date">${fmtDay(e.date)}</span><span class="lg-bal ${cls(b)}">${signedYen(b)}</span></div>
-        <div class="lg-machine"><span class="cat-chip">${e.type === "slot" ? "スロット" : "パチンコ"}</span> ${escapeHTML(e.machine || "（機種未入力）")}</div>
-        <div class="lg-meta">投資 ${yen(e.invest)} → 回収 ${yen(e.recover)}${e.rate != null ? `／実回転数 ${e.rate}回転/千円` : ""}</div>
-        ${fl ? `<div class="lg-fortune">${fl}</div>` : ""}
-        ${e.memo ? `<div class="lg-memo">📝 ${escapeHTML(e.memo)}</div>` : ""}
-        <div class="lg-actions"><button type="button" class="link-btn" data-act="edit">編集</button><button type="button" class="link-btn" data-act="del">削除</button></div>
-      </div>`;
+      html += entryCardHTML(e, true);
     });
     el.list.innerHTML = html;
   }
+
+  /* ---------------- 期待値の目安（ボーダーとの比較） ----------------
+     パチンコで、カタログの機種名・実回転数・投資額が分かる記録だけ、
+     期待値 = 投資額 × (実回転数 ÷ ボーダー − 1) を出す。ボーダーは borders.js（DMMぱちタウンの等価・掲載値）。
+     交換率が等価でない店・持ち玉比率・出玉の取りこぼしなどでズレるため、あくまで目安として表示する。 */
+  function evFor(e) {
+    if (e.type !== "pachinko" || e.rate == null || !(e.invest > 0) || typeof BORDER_DATA === "undefined") return null;
+    const hits = BORDER_DATA.filter((x) => x.name === e.machine && x.b[0] != null);
+    if (hits.length !== 1) return null;       // 掲載なし／条件違いが複数ある機種は出さない
+    const b = hits[0].b[0];
+    return { ev: Math.round(e.invest * (e.rate / b - 1)), border: b };
+  }
+
+  function entryCardHTML(e, showDate) {
+    const b = balance(e);
+    const rate = e.invest > 0 ? ((e.recover / e.invest) * 100).toFixed(1) + "%" : "－";
+    const ev = evFor(e);
+    const evHtml = ev
+      ? `<div class="lg-ev">期待値の目安 <b class="${cls(ev.ev)}">${signedYen(ev.ev)}</b>（実回転 ${e.rate}／ボーダー ${ev.border}）・運の差 <b class="${cls(b - ev.ev)}">${signedYen(b - ev.ev)}</b></div>`
+      : (e.rate != null ? `<div class="lg-meta">実回転数 ${e.rate}回転/千円</div>` : "");
+    const fl = showDate ? fortuneLines(e.date, 2) : "";
+    return `<div class="lg-entry" data-id="${escapeHTML(e.id)}">
+      ${showDate ? `<div class="lg-date">${fmtDay(e.date)}</div>` : ""}
+      <div class="lg-machine"><span class="cat-chip">${e.type === "slot" ? "スロット" : "パチンコ"}</span> ${escapeHTML(e.machine || "（機種未入力）")}</div>
+      <div class="lg-cols">
+        <div><small>投資金額</small><b>${yen(e.invest)}</b></div>
+        <div><small>回収金額</small><b>${yen(e.recover)}</b></div>
+        <div><small>回収率</small><b>${rate}</b></div>
+        <div class="lg-big ${cls(b)}">${signedYen(b)}</div>
+      </div>
+      ${evHtml}
+      ${fl ? `<div class="lg-fortune">${fl}</div>` : ""}
+      ${e.memo ? `<div class="lg-memo">📝 ${escapeHTML(e.memo)}</div>` : ""}
+      <div class="lg-actions"><button type="button" class="link-btn" data-act="edit">編集</button><button type="button" class="link-btn" data-act="del">削除</button></div>
+    </div>`;
+  }
+
+  /* ---------------- カレンダー ---------------- */
+  const calEl = { title: $("cal-title"), grid: $("cal-grid"), total: $("cal-total"), stats: $("cal-stats"), day: $("cal-day"), prev: $("cal-prev"), next: $("cal-next") };
+  const _now = new Date();
+  const cal = { y: _now.getFullYear(), m: _now.getMonth() + 1, sel: todayStr() };
+
+  // セル内の金額は短く（10万円以上は「万」表記）
+  function calAmt(n) {
+    const a = Math.abs(n);
+    const s = a >= 100000 ? (a / 10000).toFixed(a >= 1000000 ? 0 : 1).replace(/\.0$/, "") + "万" : a.toLocaleString("ja-JP");
+    return (n < 0 ? "−" : "") + s;
+  }
+  const monthKey = (y, m) => `${y}-${pad(m)}`;
+
+  function renderCalendar() {
+    const mk = monthKey(cal.y, cal.m);
+    const first = new Date(cal.y, cal.m - 1, 1).getDay();
+    const days = new Date(cal.y, cal.m, 0).getDate();
+    const byDay = {};
+    data.entries.filter((e) => e.date.startsWith(mk)).forEach((e) => { (byDay[e.date] = byDay[e.date] || []).push(e); });
+    const today = todayStr();
+    let html = "";
+    for (let i = 0; i < first; i++) html += `<span class="cal-cell cal-empty"></span>`;
+    for (let d = 1; d <= days; d++) {
+      const ds = `${mk}-${pad(d)}`;
+      const list = byDay[ds];
+      const sum = list ? list.reduce((a, e) => a + balance(e), 0) : null;
+      const fort = data.fortunes[ds] ? `<i class="cal-dot" title="占い履歴あり"></i>` : "";
+      const future = ds > today;
+      html += `<button type="button" class="cal-cell${ds === today ? " is-today" : ""}${ds === cal.sel ? " is-sel" : ""}${future ? " is-future" : ""}" data-date="${ds}" role="gridcell" aria-label="${cal.m}月${d}日${sum == null ? "" : "、収支 " + signedYen(sum)}"${future ? " disabled" : ""}>
+        <span class="cal-num">${d}</span>${fort}
+        ${sum == null ? `<span class="cal-amt"></span>` : `<span class="cal-amt ${cls(sum)}">${calAmt(sum)}</span>`}
+      </button>`;
+    }
+    calEl.grid.innerHTML = html;
+    calEl.title.textContent = `${cal.y}年${cal.m}月`;
+    const cur = new Date();
+    calEl.next.disabled = cal.y === cur.getFullYear() && cal.m === cur.getMonth() + 1;
+
+    // 月の集計
+    const es = data.entries.filter((e) => e.date.startsWith(mk));
+    const bal = es.reduce((a, e) => a + balance(e), 0);
+    const inv = es.reduce((a, e) => a + e.invest, 0), rec = es.reduce((a, e) => a + e.recover, 0);
+    calEl.total.className = "cal-total " + cls(bal);
+    calEl.total.textContent = es.length ? `${cal.m}月の収支 ${signedYen(bal)}` : `${cal.m}月の記録なし`;
+    const dayTotals = Object.keys(byDay).map((d) => byDay[d].reduce((a, e) => a + balance(e), 0));
+    const wins = dayTotals.filter((x) => x > 0).length, losses = dayTotals.filter((x) => x < 0).length;
+    const withEv = es.map((e) => ({ e, v: evFor(e) })).filter((x) => x.v);
+    const evSum = withEv.reduce((a, x) => a + x.v.ev, 0);
+    const luck = withEv.reduce((a, x) => a + balance(x.e), 0) - evSum;
+    calEl.stats.innerHTML = es.length ? `
+      <div><small>投資</small><b>${yen(inv)}</b></div>
+      <div><small>回収</small><b>${yen(rec)}</b></div>
+      <div><small>回収率</small><b>${inv > 0 ? ((rec / inv) * 100).toFixed(1) + "%" : "－"}</b></div>
+      <div><small>勝ち／負け日数</small><b>${wins}日／${losses}日</b></div>
+      ${withEv.length ? `<div class="cal-stat-wide"><small>期待値の目安（算出できた${withEv.length}件の合計）</small><b class="${cls(evSum)}">${signedYen(evSum)}</b><span>同じ記録の実収支との差（運）<b class="${cls(luck)}">${signedYen(luck)}</b></span></div>` : ""}` : "";
+  }
+
+  function renderDay() {
+    const d = cal.sel;
+    const list = data.entries.filter((e) => e.date === d);
+    const sum = list.reduce((a, e) => a + balance(e), 0);
+    const fl = fortuneLines(d, 8);
+    calEl.day.innerHTML = `
+      <div class="cal-day-head"><b>${Number(d.slice(0, 4))}年${fmtDay(d)}</b>${list.length ? `<span class="${cls(sum)}">${signedYen(sum)}</span>` : ""}</div>
+      ${fl ? `<div class="lg-fortune"><b>この日の占い</b>${fl}</div>` : ""}
+      ${list.map((e) => entryCardHTML(e, false)).join("") || `<p class="rank-empty">この日の記録はありません。</p>`}
+      <button type="button" class="cal-add" id="cal-add">＋ この日の記録を追加</button>`;
+  }
+
+  function selectDay(ds) {
+    cal.sel = ds;
+    if (!editingId) el.date.value = ds;
+    renderCalendar(); renderDay(); updateFormHints();
+  }
+  function gotoMonth(y, m) {
+    cal.y = y; cal.m = m;
+    const mk = monthKey(y, m);
+    if (!cal.sel.startsWith(mk)) {
+      const t = todayStr();
+      cal.sel = t.startsWith(mk) ? t : `${mk}-01`;
+      if (!editingId) el.date.value = cal.sel;
+    }
+    renderCalendar(); renderDay(); updateFormHints();
+  }
+  calEl.grid.addEventListener("click", (ev) => { const b = ev.target.closest("[data-date]"); if (b && !b.disabled) selectDay(b.dataset.date); });
+  calEl.prev.addEventListener("click", () => gotoMonth(cal.m === 1 ? cal.y - 1 : cal.y, cal.m === 1 ? 12 : cal.m - 1));
+  calEl.next.addEventListener("click", () => { if (!calEl.next.disabled) gotoMonth(cal.m === 12 ? cal.y + 1 : cal.y, cal.m === 12 ? 1 : cal.m + 1); });
+  calEl.title.addEventListener("click", () => { const n = new Date(); cal.sel = todayStr(); gotoMonth(n.getFullYear(), n.getMonth() + 1); selectDay(cal.sel); });
+  calEl.day.addEventListener("click", (ev) => {
+    if (ev.target.closest("#cal-add")) {
+      if (editingId) resetForm(true);
+      el.date.value = cal.sel; updateFormHints();
+      el.form.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => el.machine.focus({ preventScroll: true }), 300);
+    }
+  });
 
   function renderFortunes() {
     const days = Object.keys(data.fortunes).sort().reverse().slice(0, 30);
@@ -254,7 +378,7 @@
 
   function renderAll() {
     el.warn.hidden = storageOk;
-    renderSummary(); renderList(); renderFortunes(); renderInsight(); renderBackupNudge();
+    renderSummary(); renderCalendar(); renderDay(); renderList(); renderFortunes(); renderInsight(); renderBackupNudge();
   }
 
   /* ---------------- フォーム ---------------- */
@@ -277,7 +401,7 @@
     el.submit.textContent = "記録する";
     el.cancel.hidden = true;
     el.machine.value = ""; el.invest.value = ""; el.recover.value = ""; el.rate.value = ""; el.memo.value = "";
-    if (!keepDate) el.date.value = todayStr();
+    if (!keepDate) el.date.value = cal.sel <= todayStr() ? cal.sel : todayStr();
     el.error.hidden = true;
     updateTypeRows(); updateFormHints();
   }
@@ -311,11 +435,13 @@
     save();
     track("ledger_save", { type: entry.type, edit: i >= 0 });
     resetForm(true);
+    // 保存した日のカレンダーに移動する
+    cal.sel = entry.date; cal.y = Number(entry.date.slice(0, 4)); cal.m = Number(entry.date.slice(5, 7));
     renderAll();
   });
   el.cancel.addEventListener("click", () => resetForm(false));
 
-  el.list.addEventListener("click", (ev) => {
+  function onEntryAction(ev) {
     const btn = ev.target.closest("[data-act]");
     if (!btn) return;
     const id = btn.closest(".lg-entry").dataset.id;
@@ -336,7 +462,9 @@
       updateTypeRows(); updateFormHints();
       el.form.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  });
+  }
+  el.list.addEventListener("click", onEntryAction);
+  calEl.day.addEventListener("click", onEntryAction);
 
   /* ---------------- 機種の検索サジェスト（自由入力も可） ---------------- */
   let sgItems = [];
