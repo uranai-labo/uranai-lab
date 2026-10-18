@@ -93,9 +93,11 @@
     <span class="menu-bars" aria-hidden="true"><i></i><i></i><i></i></span>
     <span class="menu-btn-text">メニュー</span>
   </button>
-  <div class="logo">🎰 パチンコ・スロット占い</div>
+  <div class="logo logo-home" id="logo-home" role="link" tabindex="0" aria-label="ホームに戻る" data-nav="intro">🎰 パチンコ・スロット占い</div>
   <p class="tagline">ボーダー・口コミ・収支ノート、そして占い</p>
 </header>
+
+<button type="button" class="home-fab" id="home-fab" data-nav="intro" aria-label="ホームに戻る" hidden>🏠 ホーム</button>
 
 <div class="menu-overlay" id="menu-overlay" hidden></div>
 <nav class="site-menu" id="site-menu" aria-label="サイトメニュー" hidden>
@@ -103,8 +105,9 @@
     <span>メニュー</span>
     <button type="button" class="menu-close" id="menu-close" aria-label="メニューを閉じる">✕</button>
   </div>
+  <button type="button" class="menu-item" data-nav="intro">🏠 ホームに戻る<small>ツール一覧・ボーダーTOP3</small></button>
   <p class="menu-group">占う</p>
-  <button type="button" class="menu-item" data-nav="intro">🎰 今日の一台を占う<small>トップ画面</small></button>
+  <button type="button" class="menu-item" data-nav="fortune">🎰 今日の一台を占う<small>質問に答えるだけ・無料</small></button>
   <button type="button" class="menu-item" data-nav="amida">🪢 あみだくじで占う<small>線は自分で引く</small></button>
   <button type="button" class="menu-item" data-nav="gamble">🔥 今日が勝負の方はこちら<small>生年月日と名前で占う</small></button>
   <p class="menu-group">機種を調べる・記録する</p>

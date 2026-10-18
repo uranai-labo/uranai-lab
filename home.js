@@ -81,6 +81,22 @@
     window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => { /* 非対応・失敗でもサイトは動く */ }); });
   }
 
+  /* ---------------- ホームに戻る ---------------- */
+  // ホーム以外の画面では、画面の左下に「🏠 ホーム」ボタンを出す。画面が切り替わるたびに表示を更新する。
+  const fab = $("home-fab");
+  function updateFab() {
+    const active = document.querySelector(".screen.active");
+    fab.hidden = !active || active.id === "screen-intro";
+  }
+  const origShowScreen = window.showScreen;
+  window.showScreen = function (name) { origShowScreen(name); updateFab(); };
+  updateFab();
+  // ヘッダーのロゴはキーボードでもホームに戻れるようにする
+  $("logo-home").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } });
+  // メニューの「今日の一台を占う」＝ホームの占いを開始
+  window.PS_NAV = window.PS_NAV || {};
+  window.PS_NAV.fortune = () => { $("btn-start").click(); };
+
   renderTop3();
   fillAds();
   renderInstall();

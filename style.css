@@ -1019,3 +1019,18 @@ details.ledger-notice[open] > summary{ margin-bottom:6px; }
 .pool-log{ margin:8px 0 0; padding-left:1.1em; font-size:.72rem; line-height:1.7; color:var(--text-muted); }
 .pool-card > .link-btn{ margin-top:6px; padding:0; font-size:.72rem; color:var(--text-muted); }
 .pool-box .calc-form{ margin-top:10px; }
+
+/* ---------------- ホームに戻るボタン ---------------- */
+.logo-home{ cursor:pointer; }
+.logo-home:focus-visible{ outline:2px solid var(--accent-2); outline-offset:4px; border-radius:8px; }
+.home-fab{
+  position:fixed; left:12px; bottom:calc(14px + env(safe-area-inset-bottom, 0px)); z-index:80;
+  display:inline-flex; align-items:center; gap:4px; padding:11px 16px; border:none; border-radius:999px;
+  background:rgba(36,24,51,.92); color:#fff; font-family:inherit; font-size:.85rem; font-weight:700; cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.2);
+}
+.home-fab[hidden]{ display:none; }
+.home-fab:hover, .home-fab:focus-visible{ background:var(--accent-3); outline:none; }
+.home-fab:active{ transform:scale(.97); }
+body.menu-open .home-fab{ display:none; }
+body{ padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px)); }
