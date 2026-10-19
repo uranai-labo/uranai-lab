@@ -189,7 +189,7 @@ function normalizeSearch(s) {
         <button type="button" class="btn-primary" id="cat-to-ledger">📒 この機種で収支ノートに記録する</button>
       </div>
       <p class="calc-foot cat-links">${links.join("　")}</p>
-      <p class="calc-foot">掲載値・口コミは参考情報で、出玉や勝ちを保証するものではありません。20歳未満の方は遊技できません。</p>`;
+      <p class="calc-foot">掲載値・口コミは参考情報で、出玉や勝ちを保証するものではありません。20歳未満の方は遊技できません。出典・計算方法・訂正のご依頼は<a href="./data.html">データの出典・免責</a>をご覧ください。</p>`;
     listView.hidden = true;
     detailView.hidden = false;
     renderVoteBox(document.getElementById("cat-vote"), it.machine);
