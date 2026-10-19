@@ -173,6 +173,8 @@ function normalizeSearch(s) {
     const specs = it.specs.map((s) => SPEC_LABELS[it.type][s]).join("・");
     const links = [];
     if (it.id) links.push(`<a href="https://p-town.dmm.com/machines/${it.id}" target="_blank" rel="noopener nofollow">DMMぱちタウンの機種ページ</a>`);
+    // 専用ページ（m/{ID}.html）がある機種：設置20店以上、または導入が1年以内／これから（stage5_pages.ps1と同じ基準）
+    if (it.shops >= 20 || it.isFuture || (it.introDate && (TODAY - it.introDate) / 86400000 <= 365)) links.unshift(`<a href="m/${it.id}.html">この機種の専用ページ（共有用）</a>`);
     links.push(`<a href="https://www.google.com/search?q=${encodeURIComponent(name + " 機種情報")}" target="_blank" rel="noopener">ウェブで検索</a>`);
     detailView.innerHTML = `
       <button type="button" class="step-back" id="cat-back">← 機種一覧へ</button>

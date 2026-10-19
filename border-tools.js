@@ -403,7 +403,11 @@
 
   /* ---------------- URLのハッシュで直接開く（#calc / #rank） ---------------- */
   if (!new URLSearchParams(location.search).has("c")) {
-    if (location.hash === "#calc") openCalc();
+    const dl = /^#calc\/(\d+)$/.exec(location.hash);   // 機種ごとの専用ページからの直リンク（#calc/DMMの機種ID）
+    if (dl) {
+      const idx = BORDER_DATA.findIndex((e) => e.id === Number(dl[1]) && !e.odd && e.b[0] != null && !/^設定/.test(e.label));
+      openCalc(idx >= 0 ? idx : undefined);
+    } else if (location.hash === "#calc") openCalc();
     else if (location.hash === "#rank") openRank();
   }
 })();
