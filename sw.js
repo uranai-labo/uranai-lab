@@ -7,7 +7,7 @@ const CACHE = "pslab-static-v2";
 const PRECACHE = [
   "./", "index.html", "style.css", "ads.js", "script.js", "border-tools.js", "catalog-ui.js", "ledger.js", "home.js",
   "borders.js", "machine-db.js", "reviews.js", "votes.js", "votes-config.js",
-  "data.html", "manifest.webmanifest", "images/favicon.svg", "images/icon-192.png", "images/icon-512.png",
+  "data.html", "slot-uranai.html", "pachinko-uranai.html", "today-uranai.js", "manifest.webmanifest", "images/favicon.svg", "images/icon-192.png", "images/icon-512.png",
   "images/apple-touch-icon.png", "images/roto-san.webp", "privacy.html", "terms.html",
 ];
 

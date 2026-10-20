@@ -1064,5 +1064,28 @@ body.static-page main{ max-width:560px; }
 .sp-links a{ color:var(--text); font-weight:700; font-size:.88rem; line-height:1.5; text-decoration:none; overflow-wrap:anywhere; }
 .sp-links a:hover{ color:var(--accent-3); text-decoration:underline; }
 .sp-links small{ font-size:.7rem; color:var(--text-muted); }
-.sp-card > p a, .sp-sec > p a:not(.btn-primary):not(.btn-secondary){ color:var(--accent-3); }
+.sp-card > p a:not(.btn-primary):not(.btn-secondary), .sp-sec > p a:not(.btn-primary):not(.btn-secondary){ color:var(--accent-3); }
+.btn-primary.sp-btn{ color:#fff; }
+.btn-secondary.sp-btn{ color:var(--accent-3); }
 .sp-card .calc-foot a{ color:var(--accent-3); }
+
+/* ---------------- 検索向けの占いページ・ガイド（slot-uranai.html ほか） ---------------- */
+.lp-p{ margin:0 0 12px; font-size:.9rem; line-height:1.85; }
+.lp-list{ margin:0 0 8px; padding-left:1.2em; font-size:.88rem; line-height:1.85; }
+.lp-list li{ margin-bottom:6px; }
+.lp-list a, .lp-p a{ color:var(--accent-3); }
+.lp-formula{ margin:8px 0 12px; padding:10px 12px; background:#faf5ff; border-left:4px solid var(--accent-3); border-radius:8px; font-size:.84rem; line-height:1.75; font-weight:700; overflow-wrap:anywhere; }
+.lp-today{ padding:14px; border-radius:14px; background:#faf5ff; border:1px solid #ece2ff; }
+.lp-date{ margin:0 0 6px; font-size:.78rem; color:var(--text-muted); }
+.lp-rank{ display:flex; align-items:baseline; gap:10px; margin:0; }
+.lp-rank b{ font-size:2.3rem; line-height:1.1; color:var(--accent); }
+.lp-rank span{ font-size:.8rem; color:var(--text-muted); }
+.lp-rank-text{ margin:4px 0 10px; font-size:.85rem; line-height:1.75; }
+.lp-sub{ margin:8px 0 4px; font-size:.78rem; font-weight:700; }
+.lp-today-list{ list-style:none; margin:0 0 8px; padding:0; }
+.lp-today-list li{ display:flex; flex-direction:column; padding:8px 0; border-bottom:1px solid #ece2ff; }
+.lp-spec{ font-size:.7rem; color:var(--text-muted); }
+.lp-machine{ font-size:.9rem; font-weight:700; overflow-wrap:anywhere; }
+.lp-machine a{ color:var(--text); }
+.home-links{ margin:12px 0 0; display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.78rem; }
+.home-links a{ color:var(--accent-3); }

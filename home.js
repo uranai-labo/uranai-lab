@@ -99,6 +99,17 @@
   window.PS_NAV = window.PS_NAV || {};
   window.PS_NAV.fortune = () => { $("btn-start").click(); };
 
+  // 占い専用ページ（slot-uranai.html / pachinko-uranai.html）からの直リンク：種別の質問を済ませた状態で占いを始める
+  const um = /^#uranai-(slot|pachinko)$/.exec(location.hash);
+  if (um && !new URLSearchParams(location.search).has("c")) {
+    state.step = 1;
+    state.answers = { category: um[1] };
+    state.questions = buildQuizRoute();
+    renderQuiz();
+    showScreen("quiz");
+    updateFab();
+  }
+
   renderTop3();
   fillAds();
   renderInstall();
