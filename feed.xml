@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>パチンコ・スロット占い｜ボーダー計算・収支ノート 更新情報</title>
+    <link>https://uranai-labo.github.io/uranai-lab/</link>
+    <atom:link href="https://uranai-labo.github.io/uranai-lab/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>スロット占い・パチンコ占い、ボーダー計算機、機種カタログ、カレンダー式の収支ノートの更新情報です。</description>
+    <language>ja</language>
+    <lastBuildDate>Wed, 21 Oct 2026 09:00:00 +0900</lastBuildDate>
+    <item>
+      <title>スロット占い【無料】今日の運勢とおすすめ機種</title>
+      <link>https://uranai-labo.github.io/uranai-lab/slot-uranai.html</link>
+      <guid isPermaLink="true">https://uranai-labo.github.io/uranai-lab/slot-uranai.html</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 +0900</pubDate>
+      <description>質問に答えるだけで、今日打つスロットの種類とおすすめ機種、運勢ランク、二つ名がわかる無料の占いです。日替わりの「今日のスロット占い」も掲載しています。</description>
+    </item>
+    <item>
+      <title>パチンコ占い【無料】今日の運勢とおすすめ機種</title>
+      <link>https://uranai-labo.github.io/uranai-lab/pachinko-uranai.html</link>
+      <guid isPermaLink="true">https://uranai-labo.github.io/uranai-lab/pachinko-uranai.html</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 +0900</pubDate>
+      <description>質問に答えるだけで、今日打つパチンコの区分とおすすめ機種、運勢ランク、二つ名がわかる無料の占いです。日替わりの「今日のパチンコ占い」も掲載しています。</description>
+    </item>
+    <item>
+      <title>パチンコのボーダーとは？意味・計算方法・見方（等価・非等価）</title>
+      <link>https://uranai-labo.github.io/uranai-lab/guide/border.html</link>
+      <guid isPermaLink="true">https://uranai-labo.github.io/uranai-lab/guide/border.html</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 +0900</pubDate>
+      <description>ボーダー（1,000円あたりの回転数）の意味、計算式と計算例、期待値の目安の出し方、等価・非等価・持ち玉比率で変わる理由を解説します。</description>
+    </item>
+    <item>
+      <title>パチンコ・スロットの収支管理のやり方｜つける項目・見る数字・続けるコツ</title>
+      <link>https://uranai-labo.github.io/uranai-lab/guide/shushi-note.html</link>
+      <guid isPermaLink="true">https://uranai-labo.github.io/uranai-lab/guide/shushi-note.html</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 +0900</pubDate>
+      <description>収支管理で最低限つけたい項目、見るべき数字（月の収支・回収率・期待値との差）、続けるコツ、予算の決め方を解説します。登録不要の収支ノートつき。</description>
+    </item>
+    <item>
+      <title>機種カタログ：いまホールにある約1,900機種のボーダー・設置店舗数・口コミ</title>
+      <link>https://uranai-labo.github.io/uranai-lab/m/</link>
+      <guid isPermaLink="true">https://uranai-labo.github.io/uranai-lab/m/</guid>
+      <pubDate>Mon, 19 Oct 2026 12:00:00 +0900</pubDate>
+      <description>いま設置されているパチンコ・スロットの機種を区分別・設置店舗数順に一覧にしています。機種ごとにボーダー（パチンコ）、設置店舗数、口コミ評価を確認できます。（出典：DMMぱちタウン）</description>
+    </item>
+    <item>
+      <title>収支ノート（カレンダー式・登録不要）：期待値と実収支の差、貯玉の管理にも対応</title>
+      <link>https://uranai-labo.github.io/uranai-lab/#ledger</link>
+      <guid isPermaLink="false">ledger-calendar-2026-10-18</guid>
+      <pubDate>Sun, 18 Oct 2026 12:00:00 +0900</pubDate>
+      <description>日ごとの収支をカレンダーで管理できる無料の収支ノートです。パチンコは回転数を入れると、ボーダーとの比較で期待値の目安と、実収支との差が見られます。</description>
+    </item>
+  </channel>
+</rss>
